@@ -273,6 +273,36 @@ div[data-testid="stAlert"] { border-radius: 13px; }
 .auth-panel { padding: 1.35rem 1.05rem; border: 1px solid rgba(145,169,197,.15); border-radius: 20px; background: rgba(14,23,36,.78); }
 @media (max-width: 850px) { .hero-panel { grid-template-columns: 1fr; } .hero-aside { min-height: 0; } div.block-container { padding-left: 1rem; padding-right: 1rem; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }
+/* JobTrack blue-black-slate theme */
+.stApp { background-color: #070b13; background-image: radial-gradient(1px 1px at 8% 12%,rgba(222,235,255,.62) 98%,transparent),radial-gradient(1px 1px at 18% 72%,rgba(133,180,235,.52) 98%,transparent),radial-gradient(1px 1px at 34% 28%,rgba(222,235,255,.48) 98%,transparent),radial-gradient(1px 1px at 49% 82%,rgba(160,190,225,.42) 98%,transparent),radial-gradient(1px 1px at 63% 16%,rgba(222,235,255,.55) 98%,transparent),radial-gradient(1px 1px at 77% 64%,rgba(135,177,230,.48) 98%,transparent),radial-gradient(1px 1px at 91% 31%,rgba(222,235,255,.48) 98%,transparent),radial-gradient(ellipse at 77% -12%,rgba(34,78,139,.32),transparent 35%),radial-gradient(ellipse at 8% 38%,rgba(24,58,96,.22),transparent 29%); color: #edf3fb; }
+.eyebrow, .hero-copy h1 span, .auth-hero h1 span { color: #8bbcff; }
+.hero-panel { border-color: rgba(104,157,220,.25); background: radial-gradient(ellipse at 92% 4%,rgba(52,99,158,.24),transparent 34%),linear-gradient(115deg,rgba(17,30,48,.97),rgba(12,21,34,.96) 57%,rgba(22,33,50,.94)); }
+.hero-panel:before { background: rgba(76,132,196,.22); }
+.hero-aside { background: radial-gradient(circle at 88% 5%,rgba(67,120,187,.2),transparent 43%),linear-gradient(145deg,rgba(255,255,255,.06),rgba(255,255,255,.015)); }
+.hero-aside:before { border-color: rgba(123,174,230,.28); box-shadow: 0 0 0 17px rgba(123,174,230,.035),0 0 0 36px rgba(123,174,230,.025); }
+.hero-aside:after { background: #9ac8f7; box-shadow: 0 0 17px 5px rgba(138,187,241,.6); }
+.hero-orbit span, .auth-brand-mark, .sidebar-brand-mark { border-color: rgba(88,146,211,.48); color: #a5cbf4; background: rgba(52,106,169,.14); }
+.metric-card:hover, [data-testid="stMetric"]:hover { border-color: rgba(92,153,228,.4); }
+.signal-heading span { color: #92bdf0; }
+.pipeline-track i { background: linear-gradient(90deg,#4287dc,#8abfff); box-shadow: 0 0 14px rgba(84,143,210,.3); }
+.mini-badge { border-color: rgba(112,164,218,.27); color: #a5c8ef; background: rgba(52,106,169,.12); }
+div[data-testid="stVerticalBlockBorderWrapper"]:hover { border-color: rgba(92,153,228,.34) !important; }
+div[data-testid="stTabs"] button[aria-selected="true"] { color: #e3efff; background: linear-gradient(135deg,rgba(52,106,169,.28),rgba(52,106,169,.09)); }
+div.stButton > button:after, div.stFormSubmitButton > button:after, a[data-testid="stLinkButton"]:after { background: radial-gradient(circle,rgba(190,218,250,.42),rgba(81,145,215,.12) 36%,transparent 68%); }
+div.stButton > button:hover, div.stFormSubmitButton > button:hover, a[data-testid="stLinkButton"]:hover { border-color: rgba(92,153,228,.62); box-shadow: 0 8px 24px rgba(53,105,167,.2); }
+div.stButton > button:active, div.stFormSubmitButton > button:active, a[data-testid="stLinkButton"]:active { box-shadow: 0 0 0 4px rgba(67,118,188,.18),0 0 24px rgba(67,118,188,.38); }
+div.stButton > button:focus-visible, div.stFormSubmitButton > button:focus-visible, a[data-testid="stLinkButton"]:focus-visible { outline-color: #8ab8ed; }
+div.stButton > button[kind="primary"], div.stFormSubmitButton > button[kind="primary"] { background: linear-gradient(120deg,#579cf0,#4a83c4 52%,#88b4ed); box-shadow: 0 7px 22px rgba(67,118,188,.24); }
+div.stButton > button[kind="primary"]:hover, div.stFormSubmitButton > button[kind="primary"]:hover { box-shadow: 0 10px 28px rgba(67,118,188,.34); }
+[data-baseweb="input"] input:focus, [data-baseweb="textarea"] textarea:focus { border-color: #6ea7e2; box-shadow: 0 0 0 1px #6ea7e2; }
+.auth-hero { border-color: rgba(104,157,220,.25); background: radial-gradient(circle at 86% 10%,rgba(67,120,187,.2),transparent 25%),radial-gradient(circle at 5% 92%,rgba(39,83,131,.15),transparent 30%),linear-gradient(145deg,#111b2b,#0b1220 72%); }
+.auth-hero:after { border-color: rgba(123,174,230,.28); background: radial-gradient(circle at 35% 30%,rgba(137,184,235,.24),rgba(57,92,138,.16) 40%,rgba(17,25,45,.04) 72%); box-shadow: inset -20px -28px 50px rgba(5,9,23,.5),0 0 85px rgba(56,101,156,.2); }
+.auth-points i { color: #96c1f1; }
+[data-testid="stSidebar"] [data-testid="stRadio"] > label { display: none; }
+[data-testid="stSidebar"] [data-testid="stRadio"] [role="radiogroup"] { gap: .25rem; }
+[data-testid="stSidebar"] [data-testid="stRadio"] label { padding: .62rem .7rem; border: 1px solid transparent; border-radius: 11px; color: #aab7c7; transition: background .16s ease,border-color .16s ease,color .16s ease; }
+[data-testid="stSidebar"] [data-testid="stRadio"] label:hover { border-color: rgba(92,153,228,.28); background: rgba(52,106,169,.12); color: #e8f2ff; }
+[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) { border-color: rgba(92,153,228,.34); background: linear-gradient(110deg,rgba(52,106,169,.25),rgba(52,106,169,.08)); color: #dcecff; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -346,6 +376,20 @@ if "jobtrack_user_id" not in st.session_state:
 
 with st.sidebar:
     st.markdown('<div class="sidebar-brand"><span class="sidebar-brand-mark">JT</span><div><strong>JobTrack</strong><small>CAREER WORKSPACE</small></div></div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-kicker">WORKSPACE</div>', unsafe_allow_html=True)
+    active_page = st.radio(
+        "Workspace navigation",
+        ["Overview", "Find jobs", "Applications", "Resume match"],
+        format_func=lambda page: {
+            "Overview": "⌂   Overview",
+            "Find jobs": "⌕   Find jobs",
+            "Applications": "▤   Applications",
+            "Resume match": "◈   Resume match",
+        }[page],
+        label_visibility="collapsed",
+        key="active_page",
+    )
+    st.divider()
     st.markdown('<div class="section-kicker">ACCOUNT</div>', unsafe_allow_html=True)
     st.divider()
     st.caption(st.session_state.get("jobtrack_user_email", "Signed in"))
@@ -359,7 +403,8 @@ with st.sidebar:
     st.divider()
     st.caption("Your applications are protected by Supabase Row Level Security.")
 
-st.markdown("""
+if active_page == "Overview":
+    st.markdown("""
 <section class="hero-panel">
   <div class="hero-copy">
     <div class="eyebrow">CAREER SEARCH · INDIA</div>
@@ -373,7 +418,7 @@ st.markdown("""
     <div class="hero-note">Small, consistent actions make a focused job search easier to manage.</div>
   </div>
 </section>
-""", unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
 try:
     applications = get_applications(client)
@@ -394,29 +439,27 @@ offer_conversion = offers / interviews if interviews else 0
 today = date.today().isoformat()
 follow_ups = sum(bool(a["follow_up"]) and a["follow_up"] <= today and a["status"] not in ("Rejected", "Withdrawn", "Offer", "Saved") for a in applications)
 
-st.markdown('<div class="section-kicker">YOUR SEARCH · LIVE SNAPSHOT</div>', unsafe_allow_html=True)
-m1, m2, m3, m4, m5 = st.columns(5)
-for column, item in zip((m1, m2, m3, m4, m5), (
-    ("↗", "Applications", application_count, "IN PIPELINE", "#61d7bb"),
-    ("◇", "Saved jobs", saved_jobs, "SHORTLIST", "#8ea5ff"),
-    ("◉", "Interviews", interviews, "IN PROGRESS", "#c29aff"),
-    ("✦", "Offers", offers, "MILESTONE", "#f2c16d"),
-    ("◷", "Follow-ups due", follow_ups, "NEXT ACTION", "#ff8c9e"),
-)):
-    with column:
-        render_metric_card(*item)
+if active_page == "Overview":
+    st.markdown('<div class="section-kicker">YOUR SEARCH · LIVE SNAPSHOT</div>', unsafe_allow_html=True)
+    m1, m2, m3, m4, m5 = st.columns(5)
+    for column, item in zip((m1, m2, m3, m4, m5), (
+        ("↗", "Applications", application_count, "IN PIPELINE", "#68a9f4"),
+        ("◇", "Saved jobs", saved_jobs, "SHORTLIST", "#88b4ed"),
+        ("◉", "Interviews", interviews, "IN PROGRESS", "#acc4e1"),
+        ("✦", "Offers", offers, "MILESTONE", "#b7c4d3"),
+        ("◷", "Follow-ups due", follow_ups, "NEXT ACTION", "#829ab3"),
+    )):
+        with column:
+            render_metric_card(*item)
 
-overview_tab, job_search_tab, applications_tab, matcher_tab = st.tabs(["Overview", "Find jobs", "Applications", "Resume match"])
-
-with overview_tab:
     st.markdown('<div class="section-kicker">MOMENTUM & CONVERSION</div>', unsafe_allow_html=True)
     a1, a2, a3 = st.columns(3)
     with a1:
-        render_metric_card("↗", "Employer response rate", f"{response_rate:.0%}", "REPLIES", "#61d7bb")
+        render_metric_card("↗", "Employer response rate", f"{response_rate:.0%}", "REPLIES", "#68a9f4")
     with a2:
-        render_metric_card("◎", "Application → interview", f"{interview_rate:.0%}", "CONVERSION", "#8ea5ff")
+        render_metric_card("◎", "Application → interview", f"{interview_rate:.0%}", "CONVERSION", "#88b4ed")
     with a3:
-        render_metric_card("✧", "Interview → offer", f"{offer_conversion:.0%}" if interviews else "—", "MILESTONE", "#f2c16d")
+        render_metric_card("✧", "Interview → offer", f"{offer_conversion:.0%}" if interviews else "—", "MILESTONE", "#b7c4d3")
     st.caption("These rates are based on the statuses you record. They describe your tracked applications, not the whole job market.")
     left, right = st.columns([1.15, 1])
     with left:
@@ -468,7 +511,7 @@ with overview_tab:
     else:
         st.markdown('<div class="signal-card"><strong>Start your pipeline</strong><p class="muted">Save a promising role or add an application. JobTrack will keep your next steps in view.</p></div>', unsafe_allow_html=True)
 
-with job_search_tab:
+elif active_page == "Find jobs":
     st.subheader("Search jobs in India")
     st.markdown('<p class="muted">Search Adzuna listings across India or enter a city. Browse matching results page by page, save roles, then mark them Applied when you apply.</p>', unsafe_allow_html=True)
     adzuna_settings = st.secrets.get("adzuna", {})
@@ -634,7 +677,7 @@ with job_search_tab:
                         st.error("Could not load that results page. Please try again in a moment.")
             st.caption("Listings and salary details are provided by The Adzuna API. Always check the original posting before applying.")
 
-with applications_tab:
+elif active_page == "Applications":
     st.subheader("Applications")
     with st.expander("＋ Add a job application", expanded=not applications):
         with st.form("add_application", clear_on_submit=True):
@@ -716,7 +759,7 @@ with applications_tab:
     else:
         st.info("No applications yet. Add your first job above.")
 
-with matcher_tab:
+elif active_page == "Resume match":
     st.subheader("Resume match")
     st.markdown('<p class="muted">Compare your resume with a job description, see matching skills, and identify gaps. Text is analyzed for this session and is not sent to an AI service.</p>', unsafe_allow_html=True)
     resume_text = st.text_area("Paste resume text", height=210, placeholder="Paste your resume skills and experience here…")
