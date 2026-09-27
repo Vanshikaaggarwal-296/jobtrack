@@ -1,41 +1,51 @@
 # JobTrack
 
-A personal job-search dashboard built with Python and Streamlit. Track applications, monitor follow-ups, and compare resume skills with job requirements.
+A career-search dashboard for tracking job applications, interview progress, and follow-ups. Users create an account, and Supabase Row Level Security keeps each person's applications private to their account.
 
 ## Features
 
-- Dashboard with application, interview, offer, and follow-up counts
-- Add applications with company, role, status, dates, and notes
-- Search and filter applications
-- Update application status or delete an entry
-- Compare resume text with a job description using skill keywords
-- Save application data locally in SQLite
+- Account sign-up and sign-in
+- Private, persistent application records stored in Supabase
+- Dashboard metrics and an application pipeline
+- Add, search, filter, update, and delete job applications
+- Follow-up reminders
+- Resume and job-description keyword matching
+- Dark, responsive Streamlit interface
 
 ## Tech stack
 
-Python · Streamlit · SQLite
+Python · Streamlit · Supabase Auth · PostgreSQL
 
 ## Run locally
 
-1. Clone or download this repository.
-2. Open a terminal in the project folder.
-3. Create and activate a virtual environment:
+1. Clone the repository and open a terminal in the project folder.
+2. Create a virtual environment and install packages:
 
    ```powershell
    python -m venv .venv
-   .\.venv\Scripts\Activate.ps1
-      ```
-
-4. Install dependencies:
-
-   ```powershell
-   python -m pip install -r requirements.txt
+   .\.venv\Scripts\python.exe -m pip install -r requirements.txt
    ```
 
-5. Start JobTrack:
+3. Create `.streamlit/secrets.toml` with your Supabase project settings:
 
-   ```powershell
-   python -m streamlit run app.py
+   ```toml
+   [supabase]
+   url = "https://YOUR-PROJECT-REF.supabase.co"
+   publishable_key = "YOUR-SUPABASE-PUBLISHABLE-KEY"
    ```
 
-The app opens in your browser. Application records are stored in `jobtrack.db` in the project folder. The resume matcher uses a simple keyword comparison; it does not assess qualifications or send text to an AI service.
+4. Start the app:
+
+   ```powershell
+   .\.venv\Scripts\python.exe -m streamlit run app.py
+   ```
+
+Never commit `secrets.toml` or a Supabase secret/service-role key. The local secrets file is excluded by `.gitignore`.
+
+## Deploy
+
+Deploy this public GitHub repository on [Streamlit Community Cloud](https://share.streamlit.io/), using branch `main` and entrypoint `app.py`. Add the same `[supabase]` settings in the app's Cloud secrets configuration; do not put credentials in the repository.
+
+## Notes
+
+The resume matcher uses a built-in keyword list and is not an assessment of qualifications. Resume and job-description text is used in the current session and is not saved as an application record.

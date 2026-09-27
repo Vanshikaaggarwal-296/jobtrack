@@ -1,14 +1,10 @@
-import html
 import re
-import sqlite3
 from datetime import date
-from pathlib import Path
 
 import streamlit as st
+from supabase import create_client
 
 
-APP_DIR = Path(__file__).parent
-DB_PATH = APP_DIR / "jobtrack.db"
 STATUSES = ["Applied", "Interview", "Offer", "Rejected", "Withdrawn"]
 SKILLS = [
     "python", "sql", "excel", "power bi", "tableau", "pandas", "numpy",
@@ -21,56 +17,32 @@ SKILLS = [
 st.set_page_config(page_title="JobTrack | Career workspace", page_icon="💼", layout="wide")
 
 
-def connect():
-    return sqlite3.connect(DB_PATH)
+def make_supabase_client():
+    """Create a client with the public key; RLS protects every user's rows."""
+    return create_client(st.secrets["supabase"]["url"], st.secrets["supabase"]["publishable_key"])
 
 
-def initialize_db():
-    with connect() as db:
-        db.execute("""
-            CREATE TABLE IF NOT EXISTS applications (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                company TEXT NOT NULL,
-                role TEXT NOT NULL,
-                status TEXT NOT NULL DEFAULT 'Applied',
-                location TEXT DEFAULT '',
-                job_url TEXT DEFAULT '',
-                applied_on TEXT NOT NULL,
-                follow_up TEXT DEFAULT '',
-                notes TEXT DEFAULT ''
-            )
-        """)
+def get_applications(client):
+    return (
+        client.table("applications")
+        .select("id, company, role, status, location, job_url, applied_on, follow_up, notes")
+        .order("applied_on", desc=True)
+        .execute()
+        .data
+    )
 
 
-def get_applications():
-    with connect() as db:
-        db.row_factory = sqlite3.Row
-        return [dict(row) for row in db.execute(
-            "SELECT * FROM applications ORDER BY applied_on DESC, id DESC"
-        ).fetchall()]
+def add_application(client, values):
+    client.table("applications").insert(values).execute()
 
 
-def add_application(values):
-    with connect() as db:
-        db.execute("""
-            INSERT INTO applications
-            (company, role, status, location, job_url, applied_on, follow_up, notes)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """, values)
+def update_status(client, app_id, status):
+    client.table("applications").update({"status": status}).eq("id", app_id).execute()
 
 
-def update_status(app_id, status):
-    with connect() as db:
-        db.execute("UPDATE applications SET status = ? WHERE id = ?", (status, app_id))
+def delete_application(client, app_id):
+    client.table("applications").delete().eq("id", app_id).execute()
 
-
-def delete_application(app_id):
-    with connect() as db:
-        db.execute("DELETE FROM applications WHERE id = ?", (app_id,))
-
-
-initialize_db()
-applications = get_applications()
 
 st.markdown("""
 <style>
@@ -96,26 +68,96 @@ div.stButton > button { border-radius: 9px; }
 </style>
 """, unsafe_allow_html=True)
 
+try:
+    if "jobtrack_supabase_client" not in st.session_state:
+        st.session_state.jobtrack_supabase_client = make_supabase_client()
+    client = st.session_state.jobtrack_supabase_client
+except Exception:
+    st.title("💼 JobTrack")
+    st.error("Supabase settings were not found. Add the app URL and publishable key to `.streamlit/secrets.toml`.")
+    st.stop()
+
+if "jobtrack_user_id" not in st.session_state:
+    st.markdown('<div class="eyebrow">YOUR PRIVATE CAREER WORKSPACE</div>', unsafe_allow_html=True)
+    st.title("Welcome to JobTrack")
+    st.markdown('<p class="muted">Sign in or create an account. Your applications are private to your account.</p>', unsafe_allow_html=True)
+    sign_in_tab, sign_up_tab = st.tabs(["Sign in", "Create account"])
+
+    with sign_in_tab:
+        with st.form("sign_in_form"):
+            login_email = st.text_input("Email", key="login_email")
+            login_password = st.text_input("Password", type="password", key="login_password")
+            sign_in = st.form_submit_button("Sign in", type="primary", use_container_width=True)
+        if sign_in:
+            try:
+                response = client.auth.sign_in_with_password({"email": login_email.strip(), "password": login_password})
+                if response.user and response.session:
+                    st.session_state.jobtrack_user_id = response.user.id
+                    st.session_state.jobtrack_user_email = response.user.email or login_email.strip()
+                    st.rerun()
+                st.error("Sign-in failed. Check your email and password.")
+            except Exception:
+                st.error("Sign-in failed. Check your email and password, or verify your email first.")
+
+    with sign_up_tab:
+        with st.form("sign_up_form"):
+            signup_email = st.text_input("Email", key="signup_email")
+            signup_password = st.text_input("Password (at least 8 characters)", type="password", key="signup_password")
+            signup_confirm = st.text_input("Confirm password", type="password", key="signup_confirm")
+            sign_up = st.form_submit_button("Create account", type="primary", use_container_width=True)
+        if sign_up:
+            if not signup_email.strip() or "@" not in signup_email:
+                st.error("Enter a valid email address.")
+            elif len(signup_password) < 8:
+                st.error("Your password must be at least 8 characters long.")
+            elif signup_password != signup_confirm:
+                st.error("The passwords do not match.")
+            else:
+                try:
+                    response = client.auth.sign_up({"email": signup_email.strip(), "password": signup_password})
+                    if response.session and response.user:
+                        st.session_state.jobtrack_user_id = response.user.id
+                        st.session_state.jobtrack_user_email = response.user.email or signup_email.strip()
+                        st.rerun()
+                    st.success("Your account was created. Check your inbox for the verification link, then sign in.")
+                except Exception:
+                    st.error("Account creation failed. Check the email address, or try signing in if you already registered.")
+    st.caption("Supabase Auth manages your password; JobTrack does not store it.")
+    st.stop()
+
 with st.sidebar:
     st.markdown("# 💼 JobTrack")
     st.caption("YOUR CAREER WORKSPACE")
     st.divider()
-    st.markdown("**Keep your search moving.**")
-    st.caption("Track applications, follow-ups, and the skills each role asks for.")
+    st.caption(st.session_state.get("jobtrack_user_email", "Signed in"))
+    if st.button("Sign out", use_container_width=True):
+        try:
+            client.auth.sign_out()
+        finally:
+            st.session_state.pop("jobtrack_user_id", None)
+            st.session_state.pop("jobtrack_user_email", None)
+            st.rerun()
     st.divider()
-    st.caption("Local database · Your records stay on this computer")
+    st.caption("Your applications are protected by Supabase Row Level Security.")
 
 st.markdown('<div class="eyebrow">CAREER SEARCH WORKSPACE</div>', unsafe_allow_html=True)
 st.title("Your next opportunity, organized.")
 st.markdown('<p class="muted">A clear view of every application and what to do next.</p>', unsafe_allow_html=True)
 
+try:
+    applications = get_applications(client)
+except Exception:
+    st.error("Applications could not be loaded. Check the Supabase table, RLS policies, and app credentials.")
+    st.stop()
+
 total = len(applications)
 interviews = sum(a["status"] == "Interview" for a in applications)
 offers = sum(a["status"] == "Offer" for a in applications)
-follow_ups = sum(bool(a["follow_up"]) and a["follow_up"] <= date.today().isoformat() and a["status"] not in ("Rejected", "Withdrawn", "Offer") for a in applications)
+today = date.today().isoformat()
+follow_ups = sum(bool(a["follow_up"]) and a["follow_up"] <= today and a["status"] not in ("Rejected", "Withdrawn", "Offer") for a in applications)
 
 m1, m2, m3, m4 = st.columns(4)
-m1.metric("Applications", total, help="All roles saved in your tracker")
+m1.metric("Applications", total)
 m2.metric("Interviews", interviews)
 m3.metric("Offers", offers)
 m4.metric("Follow-ups due", follow_ups)
@@ -133,7 +175,7 @@ with overview_tab:
             st.info("Your pipeline is empty. Add your first role in the Applications tab.")
     with right:
         st.subheader("Next actions")
-        due = [a for a in applications if a["follow_up"] and a["follow_up"] <= date.today().isoformat() and a["status"] not in ("Rejected", "Withdrawn", "Offer")]
+        due = [a for a in applications if a["follow_up"] and a["follow_up"] <= today and a["status"] not in ("Rejected", "Withdrawn", "Offer")]
         if due:
             for app in due[:5]:
                 st.warning(f"**{app['company']}** · {app['role']} — follow up by {app['follow_up']}")
@@ -168,9 +210,18 @@ with applications_tab:
                 if not company.strip() or not role.strip():
                     st.error("Company and job title are required.")
                 else:
-                    add_application((company.strip(), role.strip(), status, location.strip(), job_url.strip(), applied_on.isoformat(), follow_up.isoformat() if follow_up else "", notes.strip()))
-                    st.success(f"Saved {role.strip()} at {company.strip()}.")
-                    st.rerun()
+                    try:
+                        add_application(client, {
+                            "company": company.strip(), "role": role.strip(), "status": status,
+                            "location": location.strip(), "job_url": job_url.strip(),
+                            "applied_on": applied_on.isoformat(),
+                            "follow_up": follow_up.isoformat() if follow_up else None,
+                            "notes": notes.strip(),
+                        })
+                        st.success(f"Saved {role.strip()} at {company.strip()}.")
+                        st.rerun()
+                    except Exception:
+                        st.error("The application could not be saved. Check your sign-in session and Supabase access policies.")
 
     if applications:
         f1, f2 = st.columns([1.5, 1])
@@ -186,11 +237,17 @@ with applications_tab:
                 new_status = st.selectbox("Status", STATUSES, index=STATUSES.index(chosen["status"]), key=f"status_{selected_id}")
                 b1, b2 = st.columns(2)
                 if b1.button("Update status", type="primary", use_container_width=True):
-                    update_status(selected_id, new_status)
-                    st.rerun()
+                    try:
+                        update_status(client, selected_id, new_status)
+                        st.rerun()
+                    except Exception:
+                        st.error("The status could not be updated. Sign in again and try once more.")
                 if b2.button("Delete application", use_container_width=True):
-                    delete_application(selected_id)
-                    st.rerun()
+                    try:
+                        delete_application(client, selected_id)
+                        st.rerun()
+                    except Exception:
+                        st.error("The application could not be deleted. Sign in again and try once more.")
         else:
             st.info("No applications match those filters.")
     else:
