@@ -1,11 +1,16 @@
 import re
+import json
 from datetime import date
+from html import unescape
+from urllib.error import HTTPError, URLError
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
 
 import streamlit as st
 from supabase import create_client
 
 
-STATUSES = ["Applied", "Interview", "Offer", "Rejected", "Withdrawn"]
+STATUSES = ["Applied", "Interview", "Offer", "Rejected", "Withdrawn", "Saved"]
 SKILLS = [
     "python", "sql", "excel", "power bi", "tableau", "pandas", "numpy",
     "machine learning", "scikit-learn", "data analysis", "data visualization",
@@ -42,6 +47,46 @@ def update_status(client, app_id, status):
 
 def delete_application(client, app_id):
     client.table("applications").delete().eq("id", app_id).execute()
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def search_adzuna_jobs(query, location, app_id, app_key):
+    """Search India's Adzuna listings. Cache results for one hour to respect API limits."""
+    params = urlencode({
+        "app_id": app_id,
+        "app_key": app_key,
+        "what": query,
+        "where": location,
+        "results_per_page": 20,
+        "sort_by": "date",
+        "content-type": "application/json",
+    })
+    url = f"https://api.adzuna.com/v1/api/jobs/in/search/1?{params}"
+    request = Request(url, headers={"Accept": "application/json", "User-Agent": "JobTrack/1.0"})
+    try:
+        with urlopen(request, timeout=20) as response:
+            return json.loads(response.read().decode("utf-8"))
+    except HTTPError as exc:
+        raise RuntimeError(f"The job search provider returned error {exc.code}.") from exc
+    except URLError as exc:
+        raise RuntimeError("Job search is temporarily unavailable. Check your internet connection and try again.") from exc
+
+
+def clean_job_text(value):
+    return re.sub(r"\s+", " ", unescape(re.sub(r"<[^>]+>", " ", value or ""))).strip()
+
+
+def render_adzuna_credit():
+    st.markdown(
+        '<div style="display:flex;align-items:center;gap:6px;min-height:23px;margin-top:8px;">'
+        '<a href="https://www.adzuna.in/" target="_blank" rel="noopener noreferrer">Jobs</a>'
+        '<span>by</span>'
+        '<a href="https://www.adzuna.in/" target="_blank" rel="noopener noreferrer">'
+        '<img src="https://upload.wikimedia.org/wikipedia/commons/5/51/Adzuna_Logo.png" '
+        'alt="Adzuna" style="width:90px;height:auto;vertical-align:middle;">'
+        '</a></div>',
+        unsafe_allow_html=True,
+    )
 
 
 st.markdown("""
@@ -151,23 +196,26 @@ except Exception:
     st.stop()
 
 total = len(applications)
+saved_jobs = sum(a["status"] == "Saved" for a in applications)
+application_count = total - saved_jobs
 interviews = sum(a["status"] == "Interview" for a in applications)
 offers = sum(a["status"] == "Offer" for a in applications)
-active_applications = [a for a in applications if a["status"] != "Withdrawn"]
-responses = sum(a["status"] in ("Interview", "Offer", "Rejected") for a in active_applications)
-response_rate = responses / len(active_applications) if active_applications else 0
-interview_rate = interviews / len(active_applications) if active_applications else 0
+submitted_applications = [a for a in applications if a["status"] not in ("Saved", "Withdrawn")]
+responses = sum(a["status"] in ("Interview", "Offer", "Rejected") for a in submitted_applications)
+response_rate = responses / len(submitted_applications) if submitted_applications else 0
+interview_rate = interviews / len(submitted_applications) if submitted_applications else 0
 offer_conversion = offers / interviews if interviews else 0
 today = date.today().isoformat()
-follow_ups = sum(bool(a["follow_up"]) and a["follow_up"] <= today and a["status"] not in ("Rejected", "Withdrawn", "Offer") for a in applications)
+follow_ups = sum(bool(a["follow_up"]) and a["follow_up"] <= today and a["status"] not in ("Rejected", "Withdrawn", "Offer", "Saved") for a in applications)
 
-m1, m2, m3, m4 = st.columns(4)
-m1.metric("Applications", total)
-m2.metric("Interviews", interviews)
-m3.metric("Offers", offers)
-m4.metric("Follow-ups due", follow_ups)
+m1, m2, m3, m4, m5 = st.columns(5)
+m1.metric("Applications", application_count)
+m2.metric("Saved jobs", saved_jobs)
+m3.metric("Interviews", interviews)
+m4.metric("Offers", offers)
+m5.metric("Follow-ups due", follow_ups)
 
-overview_tab, applications_tab, matcher_tab = st.tabs(["Overview", "Applications", "Resume match"])
+overview_tab, job_search_tab, applications_tab, matcher_tab = st.tabs(["Overview", "Find jobs", "Applications", "Resume match"])
 
 with overview_tab:
     st.subheader("Job search performance")
@@ -186,7 +234,7 @@ with overview_tab:
             st.info("Your pipeline is empty. Add your first role in the Applications tab.")
     with right:
         st.subheader("Next actions")
-        due = [a for a in applications if a["follow_up"] and a["follow_up"] <= today and a["status"] not in ("Rejected", "Withdrawn", "Offer")]
+        due = [a for a in applications if a["follow_up"] and a["follow_up"] <= today and a["status"] not in ("Rejected", "Withdrawn", "Offer", "Saved")]
         if due:
             for app in due[:5]:
                 st.warning(f"**{app['company']}** · {app['role']} — follow up by {app['follow_up']}")
@@ -197,9 +245,102 @@ with overview_tab:
     st.subheader("Recently added")
     if applications:
         recent = applications[:5]
-        st.dataframe([{"Company": a["company"], "Role": a["role"], "Status": a["status"], "Applied": a["applied_on"]} for a in recent], use_container_width=True, hide_index=True)
+        st.dataframe([{"Company": a["company"], "Role": a["role"], "Status": a["status"], "Recorded": a["applied_on"]} for a in recent], use_container_width=True, hide_index=True)
     else:
         st.caption("Your recent applications will appear here.")
+
+with job_search_tab:
+    st.subheader("Search jobs in India")
+    st.markdown('<p class="muted">Search current listings, save interesting roles, then update them to Applied when you submit an application.</p>', unsafe_allow_html=True)
+    adzuna_settings = st.secrets.get("adzuna", {})
+    adzuna_app_id = str(adzuna_settings.get("app_id", "")).strip()
+    adzuna_app_key = str(adzuna_settings.get("app_key", "")).strip()
+
+    if not adzuna_app_id or not adzuna_app_key:
+        st.info("Job search needs the app owner's Adzuna API credentials. App users do not need an Adzuna account.")
+        st.markdown("1. Create a developer account at [developer.adzuna.com](https://developer.adzuna.com/signup) and copy the **app ID** and **app key**.\n2. Add them to the app's secrets as `[adzuna]`, `app_id`, and `app_key`. Keep these keys private.")
+        with st.expander("Secrets format"):
+            st.code('[adzuna]\napp_id = "YOUR_APP_ID"\napp_key = "YOUR_APP_KEY"', language="toml")
+        st.caption("For local use, put this under your existing `[supabase]` settings in `.streamlit/secrets.toml`. For the live app, add it under Settings → Secrets in Streamlit Community Cloud.")
+    else:
+        with st.form("job_search_form"):
+            q1, q2 = st.columns([1.4, 1])
+            job_query = q1.text_input("Job title or keywords", placeholder="e.g. Python developer")
+            job_location = q2.text_input("City or state", placeholder="e.g. Bengaluru, India")
+            search_jobs = st.form_submit_button("Search jobs", type="primary", use_container_width=True)
+
+        if search_jobs:
+            if not job_query.strip():
+                st.warning("Enter a job title or keyword first.")
+            else:
+                try:
+                    with st.spinner("Searching current listings…"):
+                        result = search_adzuna_jobs(job_query.strip(), job_location.strip(), adzuna_app_id, adzuna_app_key)
+                    st.session_state["adzuna_search_results"] = result.get("results", [])
+                    st.session_state["adzuna_search_count"] = int(result.get("count", 0) or 0)
+                    st.session_state["adzuna_search_query"] = job_query.strip()
+                    st.session_state["adzuna_search_location"] = job_location.strip()
+                except RuntimeError as exc:
+                    st.error(str(exc))
+                except Exception:
+                    st.error("The job search could not load. Check the Adzuna API ID and key in app secrets, then try again.")
+
+        if "adzuna_search_results" in st.session_state:
+            job_results = st.session_state["adzuna_search_results"]
+            result_location = st.session_state.get("adzuna_search_location", "") or "India"
+            st.caption(f"{int(st.session_state.get('adzuna_search_count', len(job_results)) or 0):,} listings found · showing up to {len(job_results)} · cached for one hour")
+            if not job_results:
+                st.info("No matching jobs found. Try a broader title or a different city.")
+            else:
+                saved_urls = {a.get("job_url", "") for a in applications if a.get("job_url")}
+                for index, job in enumerate(job_results):
+                    company_name = clean_job_text((job.get("company") or {}).get("display_name") or "Company not listed")
+                    role_name = clean_job_text(job.get("title") or "Job title not listed")
+                    location_name = clean_job_text((job.get("location") or {}).get("display_name") or result_location)
+                    job_url = job.get("redirect_url", "")
+                    description = clean_job_text(job.get("description", ""))
+                    salary_min = job.get("salary_min")
+                    salary_max = job.get("salary_max")
+                    salary = "Salary not listed"
+                    if salary_min and salary_max:
+                        salary = f"Salary: ₹{salary_min:,.0f}–₹{salary_max:,.0f}"
+                    elif salary_min:
+                        salary = f"Salary from ₹{salary_min:,.0f}"
+                    elif salary_max:
+                        salary = f"Salary up to ₹{salary_max:,.0f}"
+                    job_type = job.get("contract_time") or job.get("contract_type") or ""
+                    created = (job.get("created") or "")[:10]
+
+                    with st.container(border=True):
+                        st.subheader(role_name)
+                        st.write(f"{company_name} · {location_name}")
+                        details = [part for part in (job_type.replace("_", " ").title(), salary, f"Posted {created}" if created else "") if part]
+                        st.caption(" · ".join(details))
+                        if description:
+                            st.write(description[:520] + ("…" if len(description) > 520 else ""))
+                        btn1, btn2 = st.columns([1, 5])
+                        if job_url:
+                            btn1.link_button("View job", job_url, use_container_width=True)
+                        if job_url in saved_urls:
+                            btn2.button("Already saved", key=f"saved_job_{index}", disabled=True)
+                        elif btn2.button("＋ Save to JobTrack", key=f"save_job_{index}", type="primary"):
+                            try:
+                                add_application(client, {
+                                    "company": company_name,
+                                    "role": role_name,
+                                    "status": "Saved",
+                                    "location": location_name,
+                                    "job_url": job_url,
+                                    "applied_on": today,
+                                    "follow_up": None,
+                                    "notes": f"Saved from Adzuna job search on {today}. Not yet applied.",
+                                })
+                                st.success(f"Saved {role_name} at {company_name} to your Applications tab.")
+                                st.rerun()
+                            except Exception:
+                                st.error("Could not save this listing. Check that your Supabase applications table permits the 'Saved' status.")
+                        render_adzuna_credit()
+            st.caption("Listings and salary details are provided by The Adzuna API. Always check the original posting before applying.")
 
 with applications_tab:
     st.subheader("Applications")
@@ -213,7 +354,8 @@ with applications_tab:
             location = c4.text_input("Location", placeholder="Remote, Bengaluru…")
             c5, c6 = st.columns(2)
             job_url = c5.text_input("Job posting URL", placeholder="https://…")
-            applied_on = c6.date_input("Date applied", value=date.today())
+            date_label = "Date saved" if status == "Saved" else "Date applied"
+            applied_on = c6.date_input(date_label, value=date.today())
             follow_up = st.date_input("Follow-up date (optional)", value=None)
             notes = st.text_area("Notes", placeholder="Recruiter, interview prep, key details…", height=90)
             save = st.form_submit_button("Save application", type="primary", use_container_width=True)
@@ -241,7 +383,7 @@ with applications_tab:
         filtered = [a for a in applications if (not selected_status or a["status"] in selected_status) and search.lower() in f"{a['company']} {a['role']} {a['location']}".lower()]
         st.caption(f"Showing {len(filtered)} of {total} applications")
         if filtered:
-            st.dataframe([{"Company": a["company"], "Role": a["role"], "Status": a["status"], "Location": a["location"], "Applied": a["applied_on"], "Follow-up": a["follow_up"] or "—"} for a in filtered], use_container_width=True, hide_index=True)
+            st.dataframe([{"Company": a["company"], "Role": a["role"], "Status": a["status"], "Location": a["location"], "Recorded": a["applied_on"], "Follow-up": a["follow_up"] or "—"} for a in filtered], use_container_width=True, hide_index=True)
             with st.expander("Update status or remove an application"):
                 selected_id = st.selectbox("Choose application", [a["id"] for a in filtered], format_func=lambda app_id: next(f"{a['company']} · {a['role']}" for a in filtered if a["id"] == app_id))
                 chosen = next(a for a in filtered if a["id"] == selected_id)
