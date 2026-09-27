@@ -1,7 +1,7 @@
 import re
 import json
 from datetime import date
-from html import unescape
+from html import escape, unescape
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -155,11 +155,21 @@ def render_adzuna_credit():
     )
 
 
+def render_metric_card(icon, label, value, detail, tone):
+    st.markdown(
+        f'<div class="metric-card" style="--tone:{tone}">'
+        f'<div class="metric-card-top"><span class="metric-icon">{icon}</span><span class="metric-detail">{detail}</span></div>'
+        f'<div class="metric-value">{value}</div><div class="metric-label">{label}</div>'
+        '<div class="metric-accent"></div></div>',
+        unsafe_allow_html=True,
+    )
+
+
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap');
 :root { color-scheme: dark; }
-.stApp { background: radial-gradient(ellipse at 78% -12%, rgba(30,91,92,.34), transparent 34%), radial-gradient(ellipse at 4% 36%, rgba(42,69,123,.19), transparent 28%), #080d16; color: #edf3fb; }
+.stApp { background-color: #080a18; background-image: radial-gradient(1px 1px at 8% 12%,rgba(220,232,255,.62) 98%,transparent),radial-gradient(1px 1px at 18% 72%,rgba(133,157,255,.55) 98%,transparent),radial-gradient(1px 1px at 34% 28%,rgba(220,232,255,.48) 98%,transparent),radial-gradient(1px 1px at 49% 82%,rgba(119,224,202,.45) 98%,transparent),radial-gradient(1px 1px at 63% 16%,rgba(220,232,255,.55) 98%,transparent),radial-gradient(1px 1px at 77% 64%,rgba(172,150,255,.53) 98%,transparent),radial-gradient(1px 1px at 91% 31%,rgba(220,232,255,.48) 98%,transparent),radial-gradient(ellipse at 77% -12%,rgba(76,48,143,.3),transparent 35%),radial-gradient(ellipse at 8% 38%,rgba(25,94,121,.2),transparent 29%); background-size: 100% 100%; color: #edf3fb; }
 [data-testid="stHeader"] { background: rgba(8,13,22,.75); backdrop-filter: blur(18px); }
 [data-testid="stSidebar"] { background: linear-gradient(180deg,#0d1522,#090e17); border-right: 1px solid rgba(145,169,197,.13); }
 [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p { color: #93a5ba; }
@@ -169,6 +179,9 @@ st.markdown("""
 .sidebar-brand small { display: block; margin-top: .12rem; color: #8196aa; font-size: .58rem; font-weight: 700; letter-spacing: .13em; }
 .section-kicker { margin: .4rem 0 .65rem; color: #8097ad; font-size: .67rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
 @keyframes enterUp { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slowOrbit { to { transform: rotate(360deg); } }
+@keyframes nebulaPulse { 0%,100% { opacity: .35; transform: scale(.98); } 50% { opacity: .58; transform: scale(1.04); } }
+@keyframes tapFlash { 0% { opacity: .8; transform: translate(-50%,-50%) scale(.05); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(1.4); } }
 html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
 h1, h2, h3, h4 { font-family: 'Manrope', sans-serif; letter-spacing: -.04em; color: #f3f7fc; }
 h1 { font-size: 2.4rem !important; line-height: 1.12 !important; }
@@ -177,12 +190,15 @@ h3 { font-size: 1.15rem !important; }
 div.block-container { max-width: 1480px; padding-top: 2.1rem; padding-bottom: 4rem; }
 .eyebrow { display: inline-flex; align-items: center; gap: .5rem; color: #77e0ca; text-transform: uppercase; letter-spacing: .16em; font-size: .7rem; font-weight: 700; }
 .muted { color: #9aabc0; }
-.hero-panel { position: relative; isolation: isolate; overflow: hidden; display: grid; grid-template-columns: minmax(0,1.5fr) minmax(245px,.7fr); gap: 2rem; align-items: center; margin: .35rem 0 1.7rem; padding: clamp(1.5rem,3vw,2.6rem); border: 1px solid rgba(127,190,190,.2); border-radius: 24px; background: linear-gradient(115deg,rgba(17,36,50,.97),rgba(14,25,41,.96) 57%,rgba(21,38,55,.93)); box-shadow: 0 24px 70px rgba(0,0,0,.26), inset 0 1px rgba(255,255,255,.035); animation: enterUp .55s ease-out both; }
-.hero-panel:before { content: ''; position: absolute; z-index: -1; width: 340px; height: 340px; right: 7%; top: -70%; border-radius: 50%; background: rgba(60,210,184,.13); filter: blur(65px); }
+.hero-panel { position: relative; isolation: isolate; overflow: hidden; display: grid; grid-template-columns: minmax(0,1.5fr) minmax(245px,.7fr); gap: 2rem; align-items: center; margin: .35rem 0 1.7rem; padding: clamp(1.5rem,3vw,2.6rem); border: 1px solid rgba(154,137,255,.24); border-radius: 24px; background: radial-gradient(ellipse at 92% 4%,rgba(102,65,183,.24),transparent 34%),linear-gradient(115deg,rgba(17,30,52,.97),rgba(14,22,42,.96) 57%,rgba(23,29,58,.94)); box-shadow: 0 24px 70px rgba(0,0,0,.26), inset 0 1px rgba(255,255,255,.035); animation: enterUp .55s ease-out both; }
+.hero-panel:before { content: ''; position: absolute; z-index: -1; width: 340px; height: 340px; right: 7%; top: -70%; border-radius: 50%; background: rgba(131,96,255,.2); filter: blur(65px); }
 .hero-copy h1 { margin: .75rem 0 .65rem; max-width: 760px; font-size: clamp(2.1rem,4vw,3.35rem) !important; }
 .hero-copy h1 span { color: #6de0c2; }
 .hero-copy p { max-width: 690px; color: #a8b8ca; font-size: 1.02rem; line-height: 1.75; }
-.hero-aside { padding: 1.25rem; min-height: 190px; border: 1px solid rgba(157,185,210,.14); border-radius: 18px; background: linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.015)); }
+.hero-aside { position: relative; overflow: hidden; padding: 1.25rem; min-height: 190px; border: 1px solid rgba(157,185,210,.16); border-radius: 18px; background: radial-gradient(circle at 88% 5%,rgba(135,98,255,.22),transparent 43%),linear-gradient(145deg,rgba(255,255,255,.06),rgba(255,255,255,.015)); }
+.hero-aside:before { content: ''; position: absolute; right: -42px; top: 2px; width: 190px; height: 190px; border: 1px solid rgba(161,140,255,.28); border-radius: 50%; box-shadow: 0 0 0 17px rgba(161,140,255,.035),0 0 0 36px rgba(161,140,255,.025); animation: slowOrbit 42s linear infinite; pointer-events: none; }
+.hero-aside:after { content: ''; position: absolute; right: 41px; top: 59px; width: 8px; height: 8px; border-radius: 50%; background: #a794ff; box-shadow: 0 0 17px 5px rgba(167,148,255,.65); animation: nebulaPulse 4s ease-in-out infinite; pointer-events: none; }
+.hero-aside > * { position: relative; z-index: 1; }
 .hero-aside-label { color: #8ca2ba; font-size: .67rem; font-weight: 700; letter-spacing: .15em; }
 .hero-orbit { display: flex; align-items: center; gap: .65rem; margin: 1.1rem 0 .9rem; }
 .hero-orbit span { display: inline-grid; place-items: center; width: 38px; height: 38px; border: 1px solid rgba(109,224,194,.4); border-radius: 12px; color: #7be3c8; background: rgba(52,169,151,.11); font-weight: 800; }
@@ -195,6 +211,31 @@ div.block-container { max-width: 1480px; padding-top: 2.1rem; padding-bottom: 4r
 [data-testid="stMetricValue"] { color: #f5f8fc; font-family: 'Manrope',sans-serif; font-size: 1.85rem; font-weight: 800; }
 [data-testid="stMetricDelta"] { font-size: .72rem; }
 [data-testid="stHorizontalBlock"] { gap: 1rem; }
+.metric-card { position: relative; min-height: 145px; overflow: hidden; padding: 1rem 1rem .95rem; border: 1px solid color-mix(in srgb,var(--tone) 27%,rgba(153,177,203,.14)); border-radius: 18px; background: linear-gradient(145deg,color-mix(in srgb,var(--tone) 12%,#121d2d),#0c1420 76%); box-shadow: 0 16px 34px rgba(0,0,0,.18); transition: transform .2s ease,border-color .2s ease,box-shadow .2s ease; animation: enterUp .5s ease-out both; }
+.metric-card { background: radial-gradient(circle at 92% 4%,color-mix(in srgb,var(--tone) 17%,transparent),transparent 43%),linear-gradient(145deg,color-mix(in srgb,var(--tone) 12%,#121d2d),#0c1420 76%); }
+.metric-card:hover { transform: translateY(-4px); border-color: color-mix(in srgb,var(--tone) 52%,#27364a); box-shadow: 0 21px 38px rgba(0,0,0,.28); }
+.metric-card:after { content: ''; position: absolute; width: 110px; height: 110px; right: -47px; top: -48px; border-radius: 50%; background: color-mix(in srgb,var(--tone) 20%,transparent); filter: blur(25px); }
+.metric-card-top { display: flex; align-items: center; justify-content: space-between; gap: .4rem; }
+.metric-icon { display: grid; place-items: center; width: 32px; height: 32px; border: 1px solid color-mix(in srgb,var(--tone) 42%,transparent); border-radius: 10px; color: var(--tone); background: color-mix(in srgb,var(--tone) 10%,transparent); font-size: 1rem; font-weight: 800; }
+.metric-detail { color: #8498ad; font-size: .62rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.metric-value { margin-top: .7rem; color: #f4f8fc; font-family: 'Manrope',sans-serif; font-size: 2rem; font-weight: 800; line-height: 1; }
+.metric-label { margin-top: .32rem; color: #9eafc2; font-size: .76rem; font-weight: 600; }
+.metric-accent { position: absolute; left: 1rem; right: 1rem; bottom: 0; height: 2px; border-radius: 2px 2px 0 0; background: linear-gradient(90deg,var(--tone),transparent); opacity: .65; }
+.signal-card { padding: 1.25rem; border: 1px solid rgba(145,169,197,.14); border-radius: 18px; background: linear-gradient(145deg,rgba(17,29,44,.96),rgba(11,18,29,.96)); box-shadow: 0 14px 32px rgba(0,0,0,.16); }
+.signal-heading { display: flex; align-items: center; justify-content: space-between; gap: .7rem; margin-bottom: 1.15rem; }
+.signal-heading strong { color: #e8f0f8; font-family: 'Manrope',sans-serif; font-size: 1rem; }
+.signal-heading span { color: #7fe0c6; font-size: .65rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.pipeline-row { display: grid; grid-template-columns: 100px 1fr 34px; align-items: center; gap: .7rem; margin: .95rem 0; }
+.pipeline-name { color: #a7b7c8; font-size: .77rem; }
+.pipeline-count { color: #eef5fb; font-size: .78rem; font-weight: 700; text-align: right; }
+.pipeline-track { height: 7px; overflow: hidden; border-radius: 999px; background: #202d3d; }
+.pipeline-track i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg,#3fc5ae,#73e2c8); box-shadow: 0 0 14px rgba(82,211,185,.3); }
+.mini-badge { display: inline-block; padding: .25rem .55rem; border: 1px solid rgba(119,224,202,.2); border-radius: 999px; color: #84e2cb; background: rgba(52,169,151,.08); font-size: .64rem; font-weight: 700; letter-spacing: .06em; }
+.recent-row { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 1rem; padding: .9rem 0; border-bottom: 1px solid rgba(145,169,197,.11); }
+.recent-row:last-child { border-bottom: 0; }
+.recent-company { color: #e9f0f7; font-weight: 700; }
+.recent-role { margin-top: .18rem; color: #92a5b9; font-size: .79rem; }
+.recent-date { color: #8194a8; font-size: .72rem; white-space: nowrap; }
 div[data-testid="stForm"], div[data-testid="stExpander"] { border: 1px solid rgba(145,169,197,.15); border-radius: 16px; background: rgba(15,25,39,.82); }
 div[data-testid="stExpander"] { padding: .2rem .35rem; }
 div[data-testid="stTabs"] [data-baseweb="tab-list"] { gap: .45rem; padding: .38rem; border: 1px solid rgba(145,169,197,.13); border-radius: 15px; background: rgba(12,20,31,.82); }
@@ -203,14 +244,22 @@ div[data-testid="stTabs"] button[aria-selected="true"] { color: #dffff5; backgro
 div[data-testid="stTabs"] [data-baseweb="tab-highlight"] { display: none; }
 div[data-testid="stVerticalBlockBorderWrapper"] { border-color: rgba(145,169,197,.16) !important; border-radius: 17px !important; background: linear-gradient(145deg,rgba(17,28,43,.88),rgba(12,19,30,.9)); transition: transform .18s ease,border-color .18s ease; }
 div[data-testid="stVerticalBlockBorderWrapper"]:hover { border-color: rgba(109,224,194,.32) !important; transform: translateY(-2px); }
-div.stButton > button, div.stFormSubmitButton > button, a[data-testid="stLinkButton"] { min-height: 42px; border-radius: 11px; border: 1px solid rgba(145,169,197,.19); transition: transform .16s ease,filter .16s ease,border-color .16s ease; }
-div.stButton > button:hover, div.stFormSubmitButton > button:hover, a[data-testid="stLinkButton"]:hover { transform: translateY(-1px); border-color: rgba(109,224,194,.5); filter: brightness(1.08); }
-div.stButton > button[kind="primary"], div.stFormSubmitButton > button[kind="primary"] { background: linear-gradient(135deg,#55d5b6,#35b7a5); color: #071711; border: 0; font-weight: 800; box-shadow: 0 7px 18px rgba(39,177,153,.16); }
+div.stButton > button, div.stFormSubmitButton > button, a[data-testid="stLinkButton"] { min-height: 42px; position: relative; overflow: hidden; cursor: pointer; border-radius: 11px; border: 1px solid rgba(145,169,197,.19); transition: transform .16s ease,filter .16s ease,border-color .16s ease,box-shadow .16s ease; }
+div.stButton > button:after, div.stFormSubmitButton > button:after, a[data-testid="stLinkButton"]:after { content: ''; position: absolute; top: 50%; left: 50%; width: 180%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle,rgba(190,179,255,.45),rgba(121,104,255,.12) 36%,transparent 68%); opacity: 0; pointer-events: none; }
+div.stButton > button:hover, div.stFormSubmitButton > button:hover, a[data-testid="stLinkButton"]:hover { transform: translateY(-2px); border-color: rgba(137,121,255,.62); filter: brightness(1.12); box-shadow: 0 8px 24px rgba(111,83,232,.2); }
+div.stButton > button:active, div.stFormSubmitButton > button:active, a[data-testid="stLinkButton"]:active { transform: scale(.96); filter: brightness(1.2); box-shadow: 0 0 0 4px rgba(121,104,255,.18),0 0 24px rgba(121,104,255,.38); }
+div.stButton > button:active:after, div.stFormSubmitButton > button:active:after, a[data-testid="stLinkButton"]:active:after { animation: tapFlash .32s ease-out; }
+div.stButton > button:focus-visible, div.stFormSubmitButton > button:focus-visible, a[data-testid="stLinkButton"]:focus-visible { outline: 2px solid #9f8cff; outline-offset: 3px; }
+div.stButton > button[kind="primary"], div.stFormSubmitButton > button[kind="primary"] { background: linear-gradient(120deg,#54d9c4,#8b79ff 52%,#bc80ff); background-size: 200% 100%; color: #090d18; border: 0; font-weight: 800; box-shadow: 0 7px 22px rgba(122,102,255,.22); }
+div.stButton > button[kind="primary"]:hover, div.stFormSubmitButton > button[kind="primary"]:hover { background-position: 100% 0; box-shadow: 0 10px 28px rgba(122,102,255,.34); }
 [data-baseweb="input"] input, [data-baseweb="textarea"] textarea, [data-baseweb="select"] > div { border-color: rgba(145,169,197,.2); border-radius: 10px; background-color: #0b1420; }
 [data-baseweb="input"] input:focus, [data-baseweb="textarea"] textarea:focus { border-color: #54cbb4; box-shadow: 0 0 0 1px #54cbb4; }
 [data-testid="stDataFrame"] { overflow: hidden; border: 1px solid rgba(145,169,197,.16); border-radius: 14px; }
 div[data-testid="stAlert"] { border-radius: 13px; }
 .auth-hero { position: relative; overflow: hidden; min-height: 560px; padding: clamp(1.8rem,4vw,3.2rem); border: 1px solid rgba(127,190,190,.2); border-radius: 25px; background: radial-gradient(circle at 88% 15%,rgba(65,198,177,.16),transparent 25%),linear-gradient(145deg,#112536,#0d1625 72%); box-shadow: 0 25px 70px rgba(0,0,0,.24); }
+.auth-hero { background: radial-gradient(circle at 86% 10%,rgba(141,100,255,.19),transparent 25%),radial-gradient(circle at 5% 92%,rgba(49,168,189,.12),transparent 30%),linear-gradient(145deg,#11192d,#0b1220 72%); border-color: rgba(154,137,255,.24); }
+.auth-hero:after { content: ''; position: absolute; z-index: 0; right: -90px; bottom: -135px; width: 320px; height: 320px; border: 1px solid rgba(155,137,255,.28); border-radius: 50%; background: radial-gradient(circle at 35% 30%,rgba(182,152,255,.28),rgba(86,67,153,.16) 40%,rgba(17,25,45,.04) 72%); box-shadow: inset -20px -28px 50px rgba(5,9,23,.5),0 0 85px rgba(101,80,201,.18); animation: nebulaPulse 9s ease-in-out infinite; pointer-events: none; }
+.auth-hero > * { position: relative; z-index: 1; }
 .auth-brand { display: flex; align-items: center; gap: .75rem; color: #eaf4f8; font-weight: 800; letter-spacing: .08em; }
 .auth-brand-mark { display: grid; place-items: center; width: 42px; height: 42px; border: 1px solid rgba(109,224,194,.45); border-radius: 14px; color: #7ce5c8; background: rgba(52,169,151,.13); font-family: 'Manrope',sans-serif; }
 .auth-tag { margin-left: .15rem; padding: .28rem .52rem; border: 1px solid rgba(145,169,197,.2); border-radius: 999px; color: #91a8ba; font-size: .6rem; }
@@ -347,45 +396,77 @@ follow_ups = sum(bool(a["follow_up"]) and a["follow_up"] <= today and a["status"
 
 st.markdown('<div class="section-kicker">YOUR SEARCH · LIVE SNAPSHOT</div>', unsafe_allow_html=True)
 m1, m2, m3, m4, m5 = st.columns(5)
-m1.metric("Applications", application_count)
-m2.metric("Saved jobs", saved_jobs)
-m3.metric("Interviews", interviews)
-m4.metric("Offers", offers)
-m5.metric("Follow-ups due", follow_ups)
+for column, item in zip((m1, m2, m3, m4, m5), (
+    ("↗", "Applications", application_count, "IN PIPELINE", "#61d7bb"),
+    ("◇", "Saved jobs", saved_jobs, "SHORTLIST", "#8ea5ff"),
+    ("◉", "Interviews", interviews, "IN PROGRESS", "#c29aff"),
+    ("✦", "Offers", offers, "MILESTONE", "#f2c16d"),
+    ("◷", "Follow-ups due", follow_ups, "NEXT ACTION", "#ff8c9e"),
+)):
+    with column:
+        render_metric_card(*item)
 
 overview_tab, job_search_tab, applications_tab, matcher_tab = st.tabs(["Overview", "Find jobs", "Applications", "Resume match"])
 
 with overview_tab:
-    st.subheader("Job search performance")
+    st.markdown('<div class="section-kicker">MOMENTUM & CONVERSION</div>', unsafe_allow_html=True)
     a1, a2, a3 = st.columns(3)
-    a1.metric("Employer response rate", f"{response_rate:.0%}", help="Applications with an interview, offer, or rejection response; withdrawn roles are excluded.")
-    a2.metric("Application → interview", f"{interview_rate:.0%}", help="Interviews divided by active applications.")
-    a3.metric("Interview → offer", f"{offer_conversion:.0%}" if interviews else "—", help="Offers divided by interviews. This appears once you have an interview.")
+    with a1:
+        render_metric_card("↗", "Employer response rate", f"{response_rate:.0%}", "REPLIES", "#61d7bb")
+    with a2:
+        render_metric_card("◎", "Application → interview", f"{interview_rate:.0%}", "CONVERSION", "#8ea5ff")
+    with a3:
+        render_metric_card("✧", "Interview → offer", f"{offer_conversion:.0%}" if interviews else "—", "MILESTONE", "#f2c16d")
     st.caption("These rates are based on the statuses you record. They describe your tracked applications, not the whole job market.")
     left, right = st.columns([1.15, 1])
     with left:
-        st.subheader("Application pipeline")
+        pipeline = [
+            ("Saved", saved_jobs),
+            ("Applied", sum(a["status"] == "Applied" for a in applications)),
+            ("Interview", interviews),
+            ("Offer", offers),
+            ("Closed", sum(a["status"] in ("Rejected", "Withdrawn") for a in applications)),
+        ]
+        pipeline_html = ['<div class="signal-card"><div class="signal-heading"><strong>Application pipeline</strong><span>Live overview</span></div>']
         if applications:
-            counts = {status: sum(a["status"] == status for a in applications) for status in STATUSES}
-            st.bar_chart(counts, color="#36b9a7", height=260)
+            denominator = max(total, 1)
+            for stage, count in pipeline:
+                width = min(100, round(count / denominator * 100))
+                pipeline_html.append(
+                    f'<div class="pipeline-row"><span class="pipeline-name">{stage}</span>'
+                    f'<div class="pipeline-track"><i style="width:{width}%"></i></div>'
+                    f'<span class="pipeline-count">{count}</span></div>'
+                )
         else:
-            st.info("Your pipeline is empty. Add your first role in the Applications tab.")
+            pipeline_html.append('<p class="muted">Your pipeline is ready. Add a role to see progress here.</p>')
+        pipeline_html.append('</div>')
+        st.markdown("".join(pipeline_html), unsafe_allow_html=True)
     with right:
-        st.subheader("Next actions")
         due = [a for a in applications if a["follow_up"] and a["follow_up"] <= today and a["status"] not in ("Rejected", "Withdrawn", "Offer", "Saved")]
+        action_html = ['<div class="signal-card"><div class="signal-heading"><strong>Next actions</strong><span>Keep moving</span></div>']
         if due:
             for app in due[:5]:
-                st.warning(f"**{app['company']}** · {app['role']} — follow up by {app['follow_up']}")
+                company_html = escape(clean_job_text(app["company"]))
+                role_html = escape(clean_job_text(app["role"]))
+                action_html.append(f'<div class="recent-row"><div><div class="recent-company">{company_html}</div><div class="recent-role">{role_html}</div></div><span class="mini-badge">DUE {app["follow_up"]}</span></div>')
         elif applications:
-            st.success("You’re all caught up. Add follow-up dates to keep momentum.")
+            action_html.append('<p class="muted">You’re all caught up. Add follow-up dates to keep your momentum visible.</p>')
         else:
-            st.caption("Follow-up reminders will show here once you add applications.")
-    st.subheader("Recently added")
+            action_html.append('<p class="muted">Your reminders will appear here when you add applications.</p>')
+        action_html.append('</div>')
+        st.markdown("".join(action_html), unsafe_allow_html=True)
+    st.markdown('<div class="section-kicker" style="margin-top:1.8rem">YOUR LATEST MOVES</div>', unsafe_allow_html=True)
     if applications:
-        recent = applications[:5]
-        st.dataframe([{"Company": a["company"], "Role": a["role"], "Status": a["status"], "Recorded": a["applied_on"]} for a in recent], use_container_width=True, hide_index=True)
+        for app in applications[:5]:
+            with st.container(border=True):
+                row_left, row_right = st.columns([3, 1])
+                company_html = escape(clean_job_text(app["company"]))
+                role_html = escape(clean_job_text(app["role"]))
+                status_html = escape(app["status"].upper())
+                row_left.markdown(f'**{company_html}**<div class="recent-role">{role_html}</div>', unsafe_allow_html=True)
+                row_right.markdown(f'<div style="text-align:right"><span class="mini-badge">{status_html}</span><div class="recent-date" style="margin-top:.45rem">{app["applied_on"]}</div></div>', unsafe_allow_html=True)
     else:
-        st.caption("Your recent applications will appear here.")
+        st.markdown('<div class="signal-card"><strong>Start your pipeline</strong><p class="muted">Save a promising role or add an application. JobTrack will keep your next steps in view.</p></div>', unsafe_allow_html=True)
 
 with job_search_tab:
     st.subheader("Search jobs in India")
