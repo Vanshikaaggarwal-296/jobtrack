@@ -11,6 +11,7 @@ from supabase import create_client
 
 
 STATUSES = ["Applied", "Interview", "Offer", "Rejected", "Withdrawn", "Saved"]
+ADZUNA_RESULTS_PER_PAGE = 20
 SKILLS = [
     "python", "sql", "excel", "power bi", "tableau", "pandas", "numpy",
     "machine learning", "scikit-learn", "data analysis", "data visualization",
@@ -50,18 +51,18 @@ def delete_application(client, app_id):
 
 
 @st.cache_data(ttl=3600, show_spinner=False)
-def search_adzuna_jobs(query, location, app_id, app_key):
-    """Search India's Adzuna listings. Cache results for one hour to respect API limits."""
+def search_adzuna_jobs(query, location, page, app_id, app_key):
+    """Search one page of India's Adzuna listings; cache it for one hour."""
     params = urlencode({
         "app_id": app_id,
         "app_key": app_key,
         "what": query,
         "where": location,
-        "results_per_page": 20,
+        "results_per_page": ADZUNA_RESULTS_PER_PAGE,
         "sort_by": "date",
         "content-type": "application/json",
     })
-    url = f"https://api.adzuna.com/v1/api/jobs/in/search/1?{params}"
+    url = f"https://api.adzuna.com/v1/api/jobs/in/search/{page}?{params}"
     request = Request(url, headers={"Accept": "application/json", "User-Agent": "JobTrack/1.0"})
     try:
         with urlopen(request, timeout=20) as response:
@@ -251,7 +252,7 @@ with overview_tab:
 
 with job_search_tab:
     st.subheader("Search jobs in India")
-    st.markdown('<p class="muted">Search current listings, save interesting roles, then update them to Applied when you submit an application.</p>', unsafe_allow_html=True)
+    st.markdown('<p class="muted">Search Adzuna listings across India or enter a city. Browse matching results page by page, save roles, then mark them Applied when you apply.</p>', unsafe_allow_html=True)
     adzuna_settings = st.secrets.get("adzuna", {})
     adzuna_app_id = str(adzuna_settings.get("app_id", "")).strip()
     adzuna_app_key = str(adzuna_settings.get("app_key", "")).strip()
@@ -266,20 +267,25 @@ with job_search_tab:
         with st.form("job_search_form"):
             q1, q2 = st.columns([1.4, 1])
             job_query = q1.text_input("Job title or keywords", placeholder="e.g. Python developer")
-            job_location = q2.text_input("City or state", placeholder="e.g. Bengaluru, India")
+            job_location = q2.text_input(
+                "City or location (optional)",
+                placeholder="e.g. Jaipur, Mumbai, Noida — blank means all India",
+                help="Type any city, locality, or state. Leave this empty to search across India.",
+            )
             search_jobs = st.form_submit_button("Search jobs", type="primary", use_container_width=True)
 
         if search_jobs:
             if not job_query.strip():
-                st.warning("Enter a job title or keyword first.")
+                    st.warning("Enter a job title or keyword first.")
             else:
                 try:
                     with st.spinner("Searching current listings…"):
-                        result = search_adzuna_jobs(job_query.strip(), job_location.strip(), adzuna_app_id, adzuna_app_key)
+                        result = search_adzuna_jobs(job_query.strip(), job_location.strip(), 1, adzuna_app_id, adzuna_app_key)
                     st.session_state["adzuna_search_results"] = result.get("results", [])
                     st.session_state["adzuna_search_count"] = int(result.get("count", 0) or 0)
                     st.session_state["adzuna_search_query"] = job_query.strip()
                     st.session_state["adzuna_search_location"] = job_location.strip()
+                    st.session_state["adzuna_search_page"] = 1
                 except RuntimeError as exc:
                     st.error(str(exc))
                 except Exception:
@@ -287,8 +293,13 @@ with job_search_tab:
 
         if "adzuna_search_results" in st.session_state:
             job_results = st.session_state["adzuna_search_results"]
-            result_location = st.session_state.get("adzuna_search_location", "") or "India"
-            st.caption(f"{int(st.session_state.get('adzuna_search_count', len(job_results)) or 0):,} listings found · showing up to {len(job_results)} · cached for one hour")
+            result_location = st.session_state.get("adzuna_search_location", "") or "Across India"
+            result_count = int(st.session_state.get("adzuna_search_count", len(job_results)) or 0)
+            current_page = int(st.session_state.get("adzuna_search_page", 1))
+            total_pages = max(1, (result_count + ADZUNA_RESULTS_PER_PAGE - 1) // ADZUNA_RESULTS_PER_PAGE)
+            first_result = ((current_page - 1) * ADZUNA_RESULTS_PER_PAGE + 1) if result_count else 0
+            last_result = min(current_page * ADZUNA_RESULTS_PER_PAGE, result_count)
+            st.caption(f"{result_count:,} matching listings · showing {first_result}–{last_result} · page {current_page} of {total_pages} · results cached for one hour")
             if not job_results:
                 st.info("No matching jobs found. Try a broader title or a different city.")
             else:
@@ -322,8 +333,8 @@ with job_search_tab:
                         if job_url:
                             btn1.link_button("View job", job_url, use_container_width=True)
                         if job_url in saved_urls:
-                            btn2.button("Already saved", key=f"saved_job_{index}", disabled=True)
-                        elif btn2.button("＋ Save to JobTrack", key=f"save_job_{index}", type="primary"):
+                            btn2.button("Already saved", key=f"saved_job_{current_page}_{index}", disabled=True)
+                        elif btn2.button("＋ Save to JobTrack", key=f"save_job_{current_page}_{index}", type="primary"):
                             try:
                                 add_application(client, {
                                     "company": company_name,
@@ -340,6 +351,31 @@ with job_search_tab:
                             except Exception:
                                 st.error("Could not save this listing. Check that your Supabase applications table permits the 'Saved' status.")
                         render_adzuna_credit()
+
+            if result_count > ADZUNA_RESULTS_PER_PAGE:
+                previous_col, page_col, next_col = st.columns([1, 2, 1])
+                previous_clicked = previous_col.button("← Previous", disabled=current_page <= 1, use_container_width=True)
+                page_col.markdown(f"<div style='text-align:center;padding:.45rem'>Page {current_page} of {total_pages}</div>", unsafe_allow_html=True)
+                next_clicked = next_col.button("More jobs →", disabled=current_page >= total_pages, use_container_width=True)
+                if previous_clicked or next_clicked:
+                    target_page = current_page - 1 if previous_clicked else current_page + 1
+                    try:
+                        with st.spinner(f"Loading page {target_page}…"):
+                            result = search_adzuna_jobs(
+                                st.session_state["adzuna_search_query"],
+                                st.session_state.get("adzuna_search_location", ""),
+                                target_page,
+                                adzuna_app_id,
+                                adzuna_app_key,
+                            )
+                        st.session_state["adzuna_search_results"] = result.get("results", [])
+                        st.session_state["adzuna_search_count"] = int(result.get("count", 0) or 0)
+                        st.session_state["adzuna_search_page"] = target_page
+                        st.rerun()
+                    except RuntimeError as exc:
+                        st.error(str(exc))
+                    except Exception:
+                        st.error("Could not load that results page. Please try again in a moment.")
             st.caption("Listings and salary details are provided by The Adzuna API. Always check the original posting before applying.")
 
 with applications_tab:

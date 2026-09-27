@@ -8,7 +8,8 @@ A career-search dashboard for tracking job applications, interview progress, and
 - Private, persistent application records stored in Supabase
 - Dashboard metrics and an application pipeline
 - Employer response, interview, and offer conversion analytics
-- Search live job listings in India by title/keyword and city
+- Search Adzuna job listings across India, or narrow results to a city/location
+- Browse matching listings page by page and save chosen roles to the tracker
 - Save a listing to your private tracker, then change it to Applied when you apply
 - Add, search, filter, update, and delete job applications
 - Follow-up reminders
