@@ -159,23 +159,71 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap');
 :root { color-scheme: dark; }
-.stApp { background: radial-gradient(ellipse at 85% 0%, #13283a 0%, #0b1220 40%, #090e18 100%); color: #e7eef8; }
-[data-testid="stHeader"] { background: transparent; }
-[data-testid="stSidebar"] { background: #0b1220; border-right: 1px solid #1d2a3a; }
+.stApp { background: radial-gradient(ellipse at 78% -12%, rgba(30,91,92,.34), transparent 34%), radial-gradient(ellipse at 4% 36%, rgba(42,69,123,.19), transparent 28%), #080d16; color: #edf3fb; }
+[data-testid="stHeader"] { background: rgba(8,13,22,.75); backdrop-filter: blur(18px); }
+[data-testid="stSidebar"] { background: linear-gradient(180deg,#0d1522,#090e17); border-right: 1px solid rgba(145,169,197,.13); }
+[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p { color: #93a5ba; }
+.sidebar-brand { display: flex; align-items: center; gap: .75rem; margin: .3rem 0 1.35rem; padding: .85rem .75rem; border: 1px solid rgba(145,169,197,.14); border-radius: 15px; background: linear-gradient(140deg,rgba(33,62,76,.52),rgba(16,27,41,.58)); }
+.sidebar-brand-mark { display: grid; place-items: center; width: 40px; height: 40px; border: 1px solid rgba(109,224,194,.42); border-radius: 13px; color: #7ce5c8; background: rgba(52,169,151,.12); font-family: 'Manrope',sans-serif; font-weight: 800; }
+.sidebar-brand strong { display: block; color: #f2f6fb; font-family: 'Manrope',sans-serif; font-size: 1rem; }
+.sidebar-brand small { display: block; margin-top: .12rem; color: #8196aa; font-size: .58rem; font-weight: 700; letter-spacing: .13em; }
+.section-kicker { margin: .4rem 0 .65rem; color: #8097ad; font-size: .67rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+@keyframes enterUp { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: translateY(0); } }
 html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
-h1, h2, h3 { font-family: 'Manrope', sans-serif; letter-spacing: -0.035em; }
-h1 { font-size: 2.2rem !important; }
-[data-testid="stMetric"] { background: linear-gradient(145deg,#131f30,#101927); padding: 20px 22px; border: 1px solid #243449; border-radius: 16px; }
-[data-testid="stMetricLabel"] { color: #8ea2b9; }
-[data-testid="stMetricValue"] { color: #f5f8fc; }
-div[data-testid="stForm"], div[data-testid="stExpander"] { background: #101a29; border: 1px solid #233449; border-radius: 14px; padding: 12px; }
-div[data-testid="stTabs"] button { color: #9db0c5; }
-div[data-testid="stTabs"] button[aria-selected="true"] { color: #63d5c2; }
-.eyebrow { color: #63d5c2; text-transform: uppercase; letter-spacing: .14em; font-size: .74rem; font-weight: 700; }
-.muted { color: #91a3b8; }
-div.stButton > button[kind="primary"], div.stFormSubmitButton > button { background: #36b9a7; color: #071511; border: 0; border-radius: 9px; font-weight: 700; }
-div.stButton > button { border-radius: 9px; }
-[data-baseweb="input"] input, [data-baseweb="textarea"] textarea, [data-baseweb="select"] > div { background-color: #0c1522; }
+h1, h2, h3, h4 { font-family: 'Manrope', sans-serif; letter-spacing: -.04em; color: #f3f7fc; }
+h1 { font-size: 2.4rem !important; line-height: 1.12 !important; }
+h2 { font-size: 1.48rem !important; }
+h3 { font-size: 1.15rem !important; }
+div.block-container { max-width: 1480px; padding-top: 2.1rem; padding-bottom: 4rem; }
+.eyebrow { display: inline-flex; align-items: center; gap: .5rem; color: #77e0ca; text-transform: uppercase; letter-spacing: .16em; font-size: .7rem; font-weight: 700; }
+.muted { color: #9aabc0; }
+.hero-panel { position: relative; isolation: isolate; overflow: hidden; display: grid; grid-template-columns: minmax(0,1.5fr) minmax(245px,.7fr); gap: 2rem; align-items: center; margin: .35rem 0 1.7rem; padding: clamp(1.5rem,3vw,2.6rem); border: 1px solid rgba(127,190,190,.2); border-radius: 24px; background: linear-gradient(115deg,rgba(17,36,50,.97),rgba(14,25,41,.96) 57%,rgba(21,38,55,.93)); box-shadow: 0 24px 70px rgba(0,0,0,.26), inset 0 1px rgba(255,255,255,.035); animation: enterUp .55s ease-out both; }
+.hero-panel:before { content: ''; position: absolute; z-index: -1; width: 340px; height: 340px; right: 7%; top: -70%; border-radius: 50%; background: rgba(60,210,184,.13); filter: blur(65px); }
+.hero-copy h1 { margin: .75rem 0 .65rem; max-width: 760px; font-size: clamp(2.1rem,4vw,3.35rem) !important; }
+.hero-copy h1 span { color: #6de0c2; }
+.hero-copy p { max-width: 690px; color: #a8b8ca; font-size: 1.02rem; line-height: 1.75; }
+.hero-aside { padding: 1.25rem; min-height: 190px; border: 1px solid rgba(157,185,210,.14); border-radius: 18px; background: linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.015)); }
+.hero-aside-label { color: #8ca2ba; font-size: .67rem; font-weight: 700; letter-spacing: .15em; }
+.hero-orbit { display: flex; align-items: center; gap: .65rem; margin: 1.1rem 0 .9rem; }
+.hero-orbit span { display: inline-grid; place-items: center; width: 38px; height: 38px; border: 1px solid rgba(109,224,194,.4); border-radius: 12px; color: #7be3c8; background: rgba(52,169,151,.11); font-weight: 800; }
+.hero-orbit i { display: block; width: 24px; height: 1px; background: #38566a; }
+.hero-orbit b { color: #e9f2fa; font-size: .86rem; }
+.hero-note { color: #91a6ba; font-size: .82rem; line-height: 1.55; }
+[data-testid="stMetric"] { position: relative; overflow: hidden; min-height: 118px; padding: 18px 19px; border: 1px solid rgba(153,177,203,.14); border-radius: 17px; background: linear-gradient(150deg,rgba(20,33,49,.98),rgba(12,20,32,.98)); box-shadow: 0 12px 28px rgba(0,0,0,.14); transition: transform .2s ease,border-color .2s ease,box-shadow .2s ease; animation: enterUp .45s ease-out both; }
+[data-testid="stMetric"]:hover { transform: translateY(-3px); border-color: rgba(109,224,194,.4); box-shadow: 0 18px 32px rgba(0,0,0,.24); }
+[data-testid="stMetricLabel"] { color: #9aabc0; font-size: .79rem; font-weight: 600; }
+[data-testid="stMetricValue"] { color: #f5f8fc; font-family: 'Manrope',sans-serif; font-size: 1.85rem; font-weight: 800; }
+[data-testid="stMetricDelta"] { font-size: .72rem; }
+[data-testid="stHorizontalBlock"] { gap: 1rem; }
+div[data-testid="stForm"], div[data-testid="stExpander"] { border: 1px solid rgba(145,169,197,.15); border-radius: 16px; background: rgba(15,25,39,.82); }
+div[data-testid="stExpander"] { padding: .2rem .35rem; }
+div[data-testid="stTabs"] [data-baseweb="tab-list"] { gap: .45rem; padding: .38rem; border: 1px solid rgba(145,169,197,.13); border-radius: 15px; background: rgba(12,20,31,.82); }
+div[data-testid="stTabs"] button { min-height: 42px; padding: .3rem 1rem; border-radius: 11px; color: #9aabc0; font-weight: 600; transition: color .18s ease,background .18s ease; }
+div[data-testid="stTabs"] button[aria-selected="true"] { color: #dffff5; background: linear-gradient(135deg,rgba(48,157,141,.25),rgba(48,157,141,.08)); }
+div[data-testid="stTabs"] [data-baseweb="tab-highlight"] { display: none; }
+div[data-testid="stVerticalBlockBorderWrapper"] { border-color: rgba(145,169,197,.16) !important; border-radius: 17px !important; background: linear-gradient(145deg,rgba(17,28,43,.88),rgba(12,19,30,.9)); transition: transform .18s ease,border-color .18s ease; }
+div[data-testid="stVerticalBlockBorderWrapper"]:hover { border-color: rgba(109,224,194,.32) !important; transform: translateY(-2px); }
+div.stButton > button, div.stFormSubmitButton > button, a[data-testid="stLinkButton"] { min-height: 42px; border-radius: 11px; border: 1px solid rgba(145,169,197,.19); transition: transform .16s ease,filter .16s ease,border-color .16s ease; }
+div.stButton > button:hover, div.stFormSubmitButton > button:hover, a[data-testid="stLinkButton"]:hover { transform: translateY(-1px); border-color: rgba(109,224,194,.5); filter: brightness(1.08); }
+div.stButton > button[kind="primary"], div.stFormSubmitButton > button[kind="primary"] { background: linear-gradient(135deg,#55d5b6,#35b7a5); color: #071711; border: 0; font-weight: 800; box-shadow: 0 7px 18px rgba(39,177,153,.16); }
+[data-baseweb="input"] input, [data-baseweb="textarea"] textarea, [data-baseweb="select"] > div { border-color: rgba(145,169,197,.2); border-radius: 10px; background-color: #0b1420; }
+[data-baseweb="input"] input:focus, [data-baseweb="textarea"] textarea:focus { border-color: #54cbb4; box-shadow: 0 0 0 1px #54cbb4; }
+[data-testid="stDataFrame"] { overflow: hidden; border: 1px solid rgba(145,169,197,.16); border-radius: 14px; }
+div[data-testid="stAlert"] { border-radius: 13px; }
+.auth-hero { position: relative; overflow: hidden; min-height: 560px; padding: clamp(1.8rem,4vw,3.2rem); border: 1px solid rgba(127,190,190,.2); border-radius: 25px; background: radial-gradient(circle at 88% 15%,rgba(65,198,177,.16),transparent 25%),linear-gradient(145deg,#112536,#0d1625 72%); box-shadow: 0 25px 70px rgba(0,0,0,.24); }
+.auth-brand { display: flex; align-items: center; gap: .75rem; color: #eaf4f8; font-weight: 800; letter-spacing: .08em; }
+.auth-brand-mark { display: grid; place-items: center; width: 42px; height: 42px; border: 1px solid rgba(109,224,194,.45); border-radius: 14px; color: #7ce5c8; background: rgba(52,169,151,.13); font-family: 'Manrope',sans-serif; }
+.auth-tag { margin-left: .15rem; padding: .28rem .52rem; border: 1px solid rgba(145,169,197,.2); border-radius: 999px; color: #91a8ba; font-size: .6rem; }
+.auth-hero h1 { margin: 3.2rem 0 1rem; font-size: clamp(2.5rem,5vw,4.1rem) !important; }
+.auth-hero h1 span { color: #70dec2; }
+.auth-hero-copy { max-width: 520px; color: #a5b7c9; font-size: 1rem; line-height: 1.8; }
+.auth-points { display: grid; gap: .9rem; margin-top: 2.2rem; color: #dce7f1; font-size: .88rem; }
+.auth-points span { display: flex; align-items: center; gap: .7rem; }
+.auth-points i { color: #76dec2; font-style: normal; }
+.auth-footnote { position: absolute; bottom: 1.6rem; color: #8296aa; font-size: .72rem; }
+.auth-panel { padding: 1.35rem 1.05rem; border: 1px solid rgba(145,169,197,.15); border-radius: 20px; background: rgba(14,23,36,.78); }
+@media (max-width: 850px) { .hero-panel { grid-template-columns: 1fr; } .hero-aside { min-height: 0; } div.block-container { padding-left: 1rem; padding-right: 1rem; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }
 </style>
 """, unsafe_allow_html=True)
 
@@ -189,56 +237,67 @@ except Exception:
     st.stop()
 
 if "jobtrack_user_id" not in st.session_state:
-    st.markdown('<div class="eyebrow">YOUR PRIVATE CAREER WORKSPACE</div>', unsafe_allow_html=True)
-    st.title("Welcome to JobTrack")
-    st.markdown('<p class="muted">Sign in or create an account. Your applications are private to your account.</p>', unsafe_allow_html=True)
-    sign_in_tab, sign_up_tab = st.tabs(["Sign in", "Create account"])
+    auth_left, auth_right = st.columns([1.12, .88], gap="large", vertical_alignment="center")
+    with auth_left:
+        st.markdown("""
+        <section class="auth-hero">
+          <div class="auth-brand"><span class="auth-brand-mark">JT</span> JOBTRACK <span class="auth-tag">CAREER WORKSPACE</span></div>
+          <div class="eyebrow" style="margin-top:3.3rem">YOUR NEXT CHAPTER STARTS HERE</div>
+          <h1>Make your next move<br><span>count.</span></h1>
+          <p class="auth-hero-copy">Bring your job search into focus. Find relevant roles, keep every application organized, and know what deserves your attention next.</p>
+          <div class="auth-points"><span><i>✦</i> Discover jobs across India</span><span><i>✦</i> Keep your application pipeline clear</span><span><i>✦</i> Spot skills to highlight for each role</span></div>
+          <div class="auth-footnote">A more intentional way to move your career forward.</div>
+        </section>
+        """, unsafe_allow_html=True)
+    with auth_right:
+        st.markdown('<section class="auth-panel"><div class="eyebrow">WELCOME BACK</div><h2 style="margin:.5rem 0 .35rem">Your workspace awaits.</h2><p class="muted">Sign in or create your private JobTrack account.</p></section>', unsafe_allow_html=True)
+        sign_in_tab, sign_up_tab = st.tabs(["Sign in", "Create account"])
 
-    with sign_in_tab:
-        with st.form("sign_in_form"):
-            login_email = st.text_input("Email", key="login_email")
-            login_password = st.text_input("Password", type="password", key="login_password")
-            sign_in = st.form_submit_button("Sign in", type="primary", use_container_width=True)
-        if sign_in:
-            try:
-                response = client.auth.sign_in_with_password({"email": login_email.strip(), "password": login_password})
-                if response.user and response.session:
-                    st.session_state.jobtrack_user_id = response.user.id
-                    st.session_state.jobtrack_user_email = response.user.email or login_email.strip()
-                    st.rerun()
-                st.error("Sign-in failed. Check your email and password.")
-            except Exception:
-                st.error("Sign-in failed. Check your email and password, or verify your email first.")
-
-    with sign_up_tab:
-        with st.form("sign_up_form"):
-            signup_email = st.text_input("Email", key="signup_email")
-            signup_password = st.text_input("Password (at least 8 characters)", type="password", key="signup_password")
-            signup_confirm = st.text_input("Confirm password", type="password", key="signup_confirm")
-            sign_up = st.form_submit_button("Create account", type="primary", use_container_width=True)
-        if sign_up:
-            if not signup_email.strip() or "@" not in signup_email:
-                st.error("Enter a valid email address.")
-            elif len(signup_password) < 8:
-                st.error("Your password must be at least 8 characters long.")
-            elif signup_password != signup_confirm:
-                st.error("The passwords do not match.")
-            else:
+        with sign_in_tab:
+            with st.form("sign_in_form"):
+                login_email = st.text_input("Email", key="login_email")
+                login_password = st.text_input("Password", type="password", key="login_password")
+                sign_in = st.form_submit_button("Sign in to JobTrack", type="primary", use_container_width=True)
+            if sign_in:
                 try:
-                    response = client.auth.sign_up({"email": signup_email.strip(), "password": signup_password})
-                    if response.session and response.user:
+                    response = client.auth.sign_in_with_password({"email": login_email.strip(), "password": login_password})
+                    if response.user and response.session:
                         st.session_state.jobtrack_user_id = response.user.id
-                        st.session_state.jobtrack_user_email = response.user.email or signup_email.strip()
+                        st.session_state.jobtrack_user_email = response.user.email or login_email.strip()
                         st.rerun()
-                    st.success("Your account was created. Check your inbox for the verification link, then sign in.")
+                    st.error("Sign-in failed. Check your email and password.")
                 except Exception:
-                    st.error("Account creation failed. Check the email address, or try signing in if you already registered.")
-    st.caption("Supabase Auth manages your password; JobTrack does not store it.")
+                    st.error("Sign-in failed. Check your email and password, or verify your email first.")
+
+        with sign_up_tab:
+            with st.form("sign_up_form"):
+                signup_email = st.text_input("Email", key="signup_email")
+                signup_password = st.text_input("Password (at least 8 characters)", type="password", key="signup_password")
+                signup_confirm = st.text_input("Confirm password", type="password", key="signup_confirm")
+                sign_up = st.form_submit_button("Create your account", type="primary", use_container_width=True)
+            if sign_up:
+                if not signup_email.strip() or "@" not in signup_email:
+                    st.error("Enter a valid email address.")
+                elif len(signup_password) < 8:
+                    st.error("Your password must be at least 8 characters long.")
+                elif signup_password != signup_confirm:
+                    st.error("The passwords do not match.")
+                else:
+                    try:
+                        response = client.auth.sign_up({"email": signup_email.strip(), "password": signup_password})
+                        if response.session and response.user:
+                            st.session_state.jobtrack_user_id = response.user.id
+                            st.session_state.jobtrack_user_email = response.user.email or signup_email.strip()
+                            st.rerun()
+                        st.success("Your account was created. Check your inbox for the verification link, then sign in.")
+                    except Exception:
+                        st.error("Account creation failed. Check the email address, or try signing in if you already registered.")
+        st.caption("Supabase Auth manages your password; JobTrack does not store it.")
     st.stop()
 
 with st.sidebar:
-    st.markdown("# 💼 JobTrack")
-    st.caption("YOUR CAREER WORKSPACE")
+    st.markdown('<div class="sidebar-brand"><span class="sidebar-brand-mark">JT</span><div><strong>JobTrack</strong><small>CAREER WORKSPACE</small></div></div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-kicker">ACCOUNT</div>', unsafe_allow_html=True)
     st.divider()
     st.caption(st.session_state.get("jobtrack_user_email", "Signed in"))
     if st.button("Sign out", use_container_width=True):
@@ -251,9 +310,21 @@ with st.sidebar:
     st.divider()
     st.caption("Your applications are protected by Supabase Row Level Security.")
 
-st.markdown('<div class="eyebrow">CAREER SEARCH WORKSPACE</div>', unsafe_allow_html=True)
-st.title("Your next opportunity, organized.")
-st.markdown('<p class="muted">A clear view of every application and what to do next.</p>', unsafe_allow_html=True)
+st.markdown("""
+<section class="hero-panel">
+  <div class="hero-copy">
+    <div class="eyebrow">CAREER SEARCH · INDIA</div>
+    <h1>Your next opportunity,<br><span>in motion.</span></h1>
+    <p>One calm, clear workspace to discover roles, keep your applications moving, and make every next step count.</p>
+  </div>
+  <div class="hero-aside">
+    <div class="hero-aside-label">YOUR CAREER CONTROL CENTER</div>
+    <div class="hero-orbit"><span>01</span><i></i><span>02</span><i></i><span>03</span></div>
+    <div class="hero-orbit"><b>Discover</b><i></i><b>Organize</b><i></i><b>Advance</b></div>
+    <div class="hero-note">Small, consistent actions make a focused job search easier to manage.</div>
+  </div>
+</section>
+""", unsafe_allow_html=True)
 
 try:
     applications = get_applications(client)
@@ -274,6 +345,7 @@ offer_conversion = offers / interviews if interviews else 0
 today = date.today().isoformat()
 follow_ups = sum(bool(a["follow_up"]) and a["follow_up"] <= today and a["status"] not in ("Rejected", "Withdrawn", "Offer", "Saved") for a in applications)
 
+st.markdown('<div class="section-kicker">YOUR SEARCH · LIVE SNAPSHOT</div>', unsafe_allow_html=True)
 m1, m2, m3, m4, m5 = st.columns(5)
 m1.metric("Applications", application_count)
 m2.metric("Saved jobs", saved_jobs)
