@@ -12,6 +12,67 @@ from supabase import create_client
 
 STATUSES = ["Applied", "Interview", "Offer", "Rejected", "Withdrawn", "Saved"]
 ADZUNA_RESULTS_PER_PAGE = 20
+JOB_TITLE_SUGGESTIONS = sorted({
+    "Accountant", "Administrative Assistant", "Advocate", "AI Engineer",
+    "Android Developer", "Backend Developer", "Business Analyst",
+    "Business Development Executive", "Chartered Accountant", "Chef",
+    "Civil Engineer", "Cloud Engineer", "Content Writer", "Customer Support Executive",
+    "Cybersecurity Analyst", "Data Analyst", "Data Engineer", "Data Scientist",
+    "Database Administrator", "Delivery Manager", "DevOps Engineer", "Digital Marketing Executive",
+    "Doctor", "Electrical Engineer", "Embedded Systems Engineer", "Finance Analyst",
+    "Frontend Developer", "Full Stack Developer", "Graphic Designer", "HR Executive",
+    "HR Manager", "Java Developer", "Legal Associate", "Machine Learning Engineer",
+    "Marketing Manager", "Mechanical Engineer", "Network Engineer", "Nurse",
+    "Operations Analyst", "Product Analyst", "Product Manager", "Project Manager",
+    "Python Developer", "QA Engineer", "Recruiter", "Research Analyst",
+    "Sales Executive", "Sales Manager", "Software Developer", "Software Engineer",
+    "SQL Developer", "Store Manager", "Teacher", "Technical Support Engineer",
+    "UI/UX Designer", "Video Editor", "Web Developer",
+})
+INDIA_CITIES_BY_STATE = {
+    "Andhra Pradesh": ["Amaravati", "Anantapur", "Guntur", "Kakinada", "Kurnool", "Nellore", "Rajahmundry", "Tirupati", "Vijayawada", "Visakhapatnam"],
+    "Arunachal Pradesh": ["Itanagar", "Naharlagun", "Pasighat", "Tawang"],
+    "Assam": ["Dibrugarh", "Guwahati", "Jorhat", "Silchar", "Tezpur"],
+    "Bihar": ["Bhagalpur", "Darbhanga", "Gaya", "Muzaffarpur", "Patna"],
+    "Chhattisgarh": ["Bhilai", "Bilaspur", "Durg", "Korba", "Raipur"],
+    "Goa": ["Mapusa", "Margao", "Panaji", "Ponda", "Vasco da Gama"],
+    "Gujarat": ["Ahmedabad", "Anand", "Bhavnagar", "Gandhinagar", "Jamnagar", "Junagadh", "Rajkot", "Surat", "Vadodara"],
+    "Haryana": ["Ambala", "Faridabad", "Gurugram", "Hisar", "Karnal", "Panipat", "Rohtak", "Sonipat"],
+    "Himachal Pradesh": ["Dharamshala", "Kullu", "Mandi", "Shimla", "Solan"],
+    "Jharkhand": ["Bokaro", "Dhanbad", "Jamshedpur", "Ranchi"],
+    "Karnataka": ["Belagavi", "Bengaluru", "Davanagere", "Hubballi", "Kalaburagi", "Mangaluru", "Mysuru", "Shivamogga", "Tumakuru", "Udupi"],
+    "Kerala": ["Alappuzha", "Kannur", "Kochi", "Kollam", "Kozhikode", "Palakkad", "Thiruvananthapuram", "Thrissur"],
+    "Madhya Pradesh": ["Bhopal", "Gwalior", "Indore", "Jabalpur", "Sagar", "Ujjain"],
+    "Maharashtra": ["Amravati", "Chhatrapati Sambhajinagar", "Kolhapur", "Mumbai", "Nagpur", "Nashik", "Navi Mumbai", "Pune", "Solapur", "Thane"],
+    "Manipur": ["Imphal", "Thoubal"],
+    "Meghalaya": ["Shillong", "Tura"],
+    "Mizoram": ["Aizawl", "Lunglei"],
+    "Nagaland": ["Dimapur", "Kohima"],
+    "Odisha": ["Bhubaneswar", "Cuttack", "Rourkela", "Sambalpur"],
+    "Punjab": ["Amritsar", "Bathinda", "Jalandhar", "Ludhiana", "Mohali", "Patiala"],
+    "Rajasthan": ["Ajmer", "Bikaner", "Jaipur", "Jodhpur", "Kota", "Udaipur"],
+    "Sikkim": ["Gangtok", "Namchi"],
+    "Tamil Nadu": ["Coimbatore", "Erode", "Madurai", "Salem", "Tiruchirappalli", "Tirunelveli", "Tiruppur", "Chennai"],
+    "Telangana": ["Hyderabad", "Karimnagar", "Khammam", "Nizamabad", "Warangal"],
+    "Tripura": ["Agartala", "Udaipur"],
+    "Uttar Pradesh": ["Agra", "Aligarh", "Bareilly", "Ghaziabad", "Gorakhpur", "Kanpur", "Lucknow", "Mathura", "Meerut", "Noida", "Prayagraj", "Varanasi"],
+    "Uttarakhand": ["Dehradun", "Haridwar", "Haldwani", "Rishikesh", "Roorkee"],
+    "West Bengal": ["Asansol", "Durgapur", "Howrah", "Kolkata", "Siliguri"],
+    "Andaman and Nicobar Islands": ["Port Blair"],
+    "Chandigarh": ["Chandigarh"],
+    "Dadra and Nagar Haveli and Daman and Diu": ["Daman", "Silvassa"],
+    "Delhi": ["Delhi", "New Delhi"],
+    "Jammu and Kashmir": ["Anantnag", "Jammu", "Srinagar"],
+    "Ladakh": ["Leh"],
+    "Lakshadweep": ["Kavaratti"],
+    "Puducherry": ["Karaikal", "Puducherry"],
+}
+INDIA_STATES = sorted(INDIA_CITIES_BY_STATE)
+ALL_INDIA_CITIES = sorted(
+    f"{city}, {state}"
+    for state, cities in INDIA_CITIES_BY_STATE.items()
+    for city in cities
+)
 SKILLS = [
     "python", "sql", "excel", "power bi", "tableau", "pandas", "numpy",
     "machine learning", "scikit-learn", "data analysis", "data visualization",
@@ -48,6 +109,10 @@ def update_status(client, app_id, status):
 
 def delete_application(client, app_id):
     client.table("applications").delete().eq("id", app_id).execute()
+
+
+def clear_city_when_state_changes():
+    st.session_state["adzuna_city_input"] = None
 
 
 @st.cache_data(ttl=3600, show_spinner=False)
@@ -264,18 +329,56 @@ with job_search_tab:
             st.code('[adzuna]\napp_id = "YOUR_APP_ID"\napp_key = "YOUR_APP_KEY"', language="toml")
         st.caption("For local use, put this under your existing `[supabase]` settings in `.streamlit/secrets.toml`. For the live app, add it under Settings → Secrets in Streamlit Community Cloud.")
     else:
-        with st.form("job_search_form"):
-            q1, q2 = st.columns([1.4, 1])
-            job_query = q1.text_input("Job title or keywords", placeholder="e.g. Python developer")
-            job_location = q2.text_input(
-                "City or location (optional)",
-                placeholder="e.g. Jaipur, Mumbai, Noida — blank means all India",
-                help="Type any city, locality, or state. Leave this empty to search across India.",
-            )
-            search_jobs = st.form_submit_button("Search jobs", type="primary", use_container_width=True)
+        q1, q2, q3 = st.columns([1.3, 1, 1.2])
+        job_query = q1.selectbox(
+            "Job title or field",
+            JOB_TITLE_SUGGESTIONS,
+            index=None,
+            placeholder="Choose a role or type any field",
+            accept_new_options=True,
+            filter_mode="contains",
+            help="Choose a suggestion or type any role, industry, or keyword.",
+            key="adzuna_job_query_input",
+        )
+        selected_state = q2.selectbox(
+            "State / union territory",
+            ["All India", *INDIA_STATES],
+            index=0,
+            accept_new_options=True,
+            filter_mode="contains",
+            help="Choose a state to see its city suggestions, or leave All India selected.",
+            key="adzuna_state_input",
+            on_change=clear_city_when_state_changes,
+        )
+        city_options = (
+            ALL_INDIA_CITIES
+            if selected_state == "All India"
+            else INDIA_CITIES_BY_STATE.get(selected_state, [])
+        )
+        selected_city = q3.selectbox(
+            "City / locality (optional)",
+            city_options,
+            index=None,
+            placeholder="Choose a city or type one",
+            accept_new_options=True,
+            filter_mode="contains",
+            help="Pick a city from the list or type any city/locality. All India + blank city searches nationwide.",
+            key="adzuna_city_input",
+        )
+        job_location = ""
+        if selected_city:
+            if selected_state == "All India" and selected_city in ALL_INDIA_CITIES:
+                job_location = selected_city
+            elif selected_state != "All India" and not selected_city.lower().endswith(f", {selected_state.lower()}"):
+                job_location = f"{selected_city}, {selected_state}"
+            else:
+                job_location = selected_city
+        elif selected_state != "All India":
+            job_location = selected_state
+        search_jobs = st.button("Search jobs", type="primary", use_container_width=True)
 
         if search_jobs:
-            if not job_query.strip():
+            if not job_query or not job_query.strip():
                     st.warning("Enter a job title or keyword first.")
             else:
                 try:
@@ -384,10 +487,26 @@ with applications_tab:
         with st.form("add_application", clear_on_submit=True):
             c1, c2 = st.columns(2)
             company = c1.text_input("Company *", placeholder="e.g. Oracle")
-            role = c2.text_input("Job title *", placeholder="e.g. Python Developer")
+            role = c2.selectbox(
+                "Job title *",
+                JOB_TITLE_SUGGESTIONS,
+                index=None,
+                placeholder="Choose a role or type any job title",
+                accept_new_options=True,
+                filter_mode="contains",
+                help="Choose a suggestion or type a title from any career field.",
+            )
             c3, c4 = st.columns(2)
             status = c3.selectbox("Status", STATUSES)
-            location = c4.text_input("Location", placeholder="Remote, Bengaluru…")
+            location = c4.selectbox(
+                "Location",
+                ["Remote", *INDIA_STATES, *ALL_INDIA_CITIES],
+                index=None,
+                placeholder="Choose or type a city/state",
+                accept_new_options=True,
+                filter_mode="contains",
+                help="Choose a suggested Indian city/state or type any location.",
+            )
             c5, c6 = st.columns(2)
             job_url = c5.text_input("Job posting URL", placeholder="https://…")
             date_label = "Date saved" if status == "Saved" else "Date applied"
@@ -396,18 +515,20 @@ with applications_tab:
             notes = st.text_area("Notes", placeholder="Recruiter, interview prep, key details…", height=90)
             save = st.form_submit_button("Save application", type="primary", use_container_width=True)
             if save:
-                if not company.strip() or not role.strip():
+                role_value = (role or "").strip()
+                location_value = (location or "").strip()
+                if not company.strip() or not role_value:
                     st.error("Company and job title are required.")
                 else:
                     try:
                         add_application(client, {
-                            "company": company.strip(), "role": role.strip(), "status": status,
-                            "location": location.strip(), "job_url": job_url.strip(),
+                            "company": company.strip(), "role": role_value, "status": status,
+                            "location": location_value, "job_url": job_url.strip(),
                             "applied_on": applied_on.isoformat(),
                             "follow_up": follow_up.isoformat() if follow_up else None,
                             "notes": notes.strip(),
                         })
-                        st.success(f"Saved {role.strip()} at {company.strip()}.")
+                        st.success(f"Saved {role_value} at {company.strip()}.")
                         st.rerun()
                     except Exception:
                         st.error("The application could not be saved. Check your sign-in session and Supabase access policies.")
