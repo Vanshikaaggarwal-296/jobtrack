@@ -7,9 +7,10 @@ A career-search dashboard for tracking job applications, interview progress, and
 - Account sign-up and sign-in
 - Private, persistent application records stored in Supabase
 - Dashboard metrics and an application pipeline
+- Employer response, interview, and offer conversion analytics
 - Add, search, filter, update, and delete job applications
 - Follow-up reminders
-- Resume and job-description keyword matching
+- Resume and job-description keyword matching with skill-gap guidance
 - Dark, responsive Streamlit interface
 
 ## Tech stack
@@ -48,4 +49,4 @@ Deploy this public GitHub repository on [Streamlit Community Cloud](https://shar
 
 ## Notes
 
-The resume matcher uses a built-in keyword list and is not an assessment of qualifications. Resume and job-description text is used in the current session and is not saved as an application record.
+The resume matcher uses a built-in keyword list. Its score is a rough keyword overlap, not a hiring probability or an assessment of qualifications. Resume and job-description text is used in the current session and is not saved as an application record. Conversion rates are calculated from the application statuses each user records.

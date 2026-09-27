@@ -153,6 +153,11 @@ except Exception:
 total = len(applications)
 interviews = sum(a["status"] == "Interview" for a in applications)
 offers = sum(a["status"] == "Offer" for a in applications)
+active_applications = [a for a in applications if a["status"] != "Withdrawn"]
+responses = sum(a["status"] in ("Interview", "Offer", "Rejected") for a in active_applications)
+response_rate = responses / len(active_applications) if active_applications else 0
+interview_rate = interviews / len(active_applications) if active_applications else 0
+offer_conversion = offers / interviews if interviews else 0
 today = date.today().isoformat()
 follow_ups = sum(bool(a["follow_up"]) and a["follow_up"] <= today and a["status"] not in ("Rejected", "Withdrawn", "Offer") for a in applications)
 
@@ -165,6 +170,12 @@ m4.metric("Follow-ups due", follow_ups)
 overview_tab, applications_tab, matcher_tab = st.tabs(["Overview", "Applications", "Resume match"])
 
 with overview_tab:
+    st.subheader("Job search performance")
+    a1, a2, a3 = st.columns(3)
+    a1.metric("Employer response rate", f"{response_rate:.0%}", help="Applications with an interview, offer, or rejection response; withdrawn roles are excluded.")
+    a2.metric("Application → interview", f"{interview_rate:.0%}", help="Interviews divided by active applications.")
+    a3.metric("Interview → offer", f"{offer_conversion:.0%}" if interviews else "—", help="Offers divided by interviews. This appears once you have an interview.")
+    st.caption("These rates are based on the statuses you record. They describe your tracked applications, not the whole job market.")
     left, right = st.columns([1.15, 1])
     with left:
         st.subheader("Application pipeline")
@@ -255,7 +266,7 @@ with applications_tab:
 
 with matcher_tab:
     st.subheader("Resume match")
-    st.markdown('<p class="muted">Compare a resume with a job description. Text is analyzed in your browser session and is not sent to an AI service.</p>', unsafe_allow_html=True)
+    st.markdown('<p class="muted">Compare your resume with a job description, see matching skills, and identify gaps. Text is analyzed for this session and is not sent to an AI service.</p>', unsafe_allow_html=True)
     resume_text = st.text_area("Paste resume text", height=210, placeholder="Paste your resume skills and experience here…")
     job_text = st.text_area("Paste job description", height=210, placeholder="Paste the job requirements here…")
     if st.button("Compare skills", type="primary"):
@@ -273,7 +284,7 @@ with matcher_tab:
         if not required:
             st.info("No skills from the built-in list were found in this job description. Try one with explicit skill names.")
         else:
-            st.metric("Skill overlap", f"{score}%", f"{len(matched)} of {len(required)} listed skills")
+            st.metric("Keyword match", f"{score}%", f"{len(matched)} of {len(required)} listed skills")
             st.progress(score / 100)
             good, gaps = st.columns(2)
             with good:
@@ -282,7 +293,14 @@ with matcher_tab:
             with gaps:
                 st.markdown("**Skills to highlight or build**")
                 st.write(", ".join(missing) if missing else "No listed skill gaps found.")
-            st.caption("This is a simple keyword comparison, not an assessment of your qualifications.")
+            st.markdown("**Suggested next step**")
+            if score >= 70:
+                st.info("Many listed skills appear in your resume. Tailor your examples to the role and consider prioritizing this application.")
+            elif score >= 40:
+                st.info("There is some skill overlap. Highlight your strongest matching experience and review the gaps before applying.")
+            else:
+                st.info("Few listed skills were found. Review the full role requirements and consider transferable experience before deciding.")
+            st.caption("This keyword match is a rough guide, not a hiring probability or an assessment of your qualifications.")
 
 st.divider()
 st.caption("JobTrack · A personal job search workspace")
